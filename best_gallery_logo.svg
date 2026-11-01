@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="15 16 78 78">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 11 88 88">
   <defs>
     <radialGradient id="bg" cx="38" cy="30" r="95" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.55" stop-color="#F8F1E6"/><stop offset="1" stop-color="#EADBC3"/>
+      <stop offset="0" stop-color="#4A4540"/><stop offset="0.55" stop-color="#2E2A26"/><stop offset="1" stop-color="#1A1816"/>
     </radialGradient>
     <linearGradient id="back" x1="30" y1="30" x2="78" y2="78" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E6D6BA"/>
