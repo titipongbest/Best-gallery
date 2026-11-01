@@ -228,7 +228,9 @@ abstract class ImageProvider {
     // - there is a content row in the Media Store and there is a file on storage
     // - there is a content row in the Media Store, but there is no longer a file on storage
     // - there is no content row in the Media Store, but there is a file on storage
-    fun deleteSingle(context: Context, contentAddress: ContentAddress) {
+    // `secureErase`: overwrite the file content before deleting it,
+    // so that the original data cannot be recovered from the storage by simple means
+    fun deleteSingle(context: Context, contentAddress: ContentAddress, secureErase: Boolean = true) {
         val mimeType = contentAddress.mimeType
         val uri = contentAddress.uri
         val path = contentAddress.path ?: throw Exception("failed to delete file because path is null")
@@ -238,6 +240,9 @@ abstract class ImageProvider {
         val initialContentExists = contentExists(context, uri)
         val initialFileExists = file.exists()
         Log.d(LOG_TAG, "delete content at uri=$uri (exists=$initialContentExists), file at path=$file (exists=$initialFileExists)")
+
+        // Best gallery: secure deletion
+        val erased = secureErase && initialFileExists && SecureEraser.overwrite(context, file, uri)
 
         if (initialContentExists) {
             // the delete request may yield a `RecoverableSecurityException` when using scoped storage,
@@ -272,7 +277,8 @@ abstract class ImageProvider {
                         throw Exception("failed to get permission from recoverable security exception", ex)
                     }
 
-                    return deleteSingle(context, contentAddress)
+                    // overwrite now if it was not possible before getting the permission
+                    return deleteSingle(context, contentAddress, secureErase = secureErase && !erased)
                 }
             }
         }
