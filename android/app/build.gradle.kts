@@ -135,7 +135,9 @@ android {
             if (signingConfigs.names.contains("release")) {
                 signingConfig = signingConfigs.getByName("release")
             } else {
-                println("Skip release signing as it is not configured")
+                // Best gallery: fall back to the debug key so that CI builds are installable
+                println("Release signing is not configured, using debug signing config")
+                signingConfig = signingConfigs.getByName("debug")
             }
             isMinifyEnabled = true
             isShrinkResources = true
