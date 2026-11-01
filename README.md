@@ -7,7 +7,22 @@
 Best gallery is a fork of [Aves](https://github.com/deckerst/aves), the gallery and metadata explorer app for Android built with Flutter.
 It keeps the original file dates when moving or copying media, so that items stay sorted as before.
 
+Refine by NorthXbar
+
 </div>
+
+### Best gallery versions
+
+The version shown in the app (About page and navigation drawer) comes from `version` in `pubspec.yaml`,
+which must be kept in sync with `flavors/pubspec_*.yaml`. Bump it with each update.
+
+- **1.0.0**
+  - rebranded as Best gallery, with its own app ID and a new icon
+  - original modified dates are kept when moving, copying, renaming, exporting, rotating and editing metadata
+  - deleted items are overwritten before removal
+  - items deleted by other apps disappear without restarting
+  - app lock with PIN ("Secure by NorthX")
+  - "Refine by NorthXbar" credit with version number
 
 ---
 

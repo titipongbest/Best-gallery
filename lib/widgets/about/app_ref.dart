@@ -1,3 +1,4 @@
+import 'package:aves/model/brand.dart';
 import 'package:aves/model/device.dart';
 import 'package:aves/theme/icons.dart';
 import 'package:aves/theme/styles.dart';
@@ -19,6 +20,11 @@ class AppReference extends StatelessWidget {
       child: Column(
         children: [
           _buildAvesLine(context),
+          const SizedBox(height: 4),
+          Text(
+            Brand.refineCredit,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(letterSpacing: .8),
+          ),
           const SizedBox(height: 16),
           Wrap(
             alignment: .center,
@@ -52,7 +58,7 @@ class AppReference extends StatelessWidget {
           style: appTitleStyle,
         ),
         Text(
-          device.packageVersion,
+          'v${device.packageVersion}',
           style: appTitleStyle,
         ),
       ],

@@ -1,3 +1,5 @@
+import 'package:aves/model/brand.dart';
+import 'package:aves/model/device.dart';
 import 'package:aves/model/filters/container/album_group.dart';
 import 'package:aves/model/filters/covered/stored_album.dart';
 import 'package:aves/model/filters/trash.dart';
@@ -221,6 +223,14 @@ class _AppDrawerState extends State<AppDrawer> with WidgetsBindingObserver {
                       ],
                     ),
                   ],
+                ),
+              ),
+              Text(
+                'v${device.packageVersion} · ${Brand.refineCredit}',
+                style: TextStyle(
+                  color: onPrimary.withValues(alpha: .85),
+                  fontSize: 12,
+                  letterSpacing: .6,
                 ),
               ),
               const SizedBox(height: 8),
