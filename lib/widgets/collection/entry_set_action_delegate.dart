@@ -363,6 +363,7 @@ class EntrySetActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAware
       context: context,
       opStream: mediaEditService.delete(opId: opId, entries: entries),
       itemCount: todoCount,
+      label: l10n.wipeInProgress,
       onCancel: () => mediaEditService.cancelFileOp(opId),
       onDone: (processed) async {
         final successOps = processed.where((op) => op.success).toSet();
@@ -375,6 +376,11 @@ class EntrySetActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAware
         if (successCount < todoCount) {
           final count = todoCount - successCount;
           showFeedback(context, FeedbackType.warn, context.l10n.collectionDeleteFailureFeedback(count));
+        } else {
+          final wipedCount = deletedOps.where((op) => op.wiped).length;
+          if (wipedCount > 0) {
+            showFeedback(context, FeedbackType.info, context.l10n.wipeSuccessFeedback(wipedCount));
+          }
         }
 
         // cleanup

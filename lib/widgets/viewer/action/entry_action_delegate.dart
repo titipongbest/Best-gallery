@@ -441,11 +441,15 @@ class EntryActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAwareMix
 
     if (!await checkStoragePermission(context, {targetEntry})) return;
 
-    if (!await targetEntry.delete()) {
+    final event = await targetEntry.delete();
+    if (event == null) {
       showFeedback(context, FeedbackType.warn, l10n.genericFailureFeedback);
     } else {
       final source = context.read<CollectionSource>();
       await source.removeEntries({targetEntry.uri}, includeTrash: true);
+      if (event.wiped) {
+        showFeedback(context, FeedbackType.info, l10n.wipeSuccessFeedback(1));
+      }
       EntryDeletedNotification({targetEntry}).dispatch(context);
     }
   }

@@ -230,7 +230,8 @@ abstract class ImageProvider {
     // - there is no content row in the Media Store, but there is a file on storage
     // `secureErase`: overwrite the file content before deleting it,
     // so that the original data cannot be recovered from the storage by simple means
-    fun deleteSingle(context: Context, contentAddress: ContentAddress, secureErase: Boolean = true) {
+    // returns whether the content was overwritten before deletion
+    fun deleteSingle(context: Context, contentAddress: ContentAddress, secureErase: Boolean = true): Boolean {
         val mimeType = contentAddress.mimeType
         val uri = contentAddress.uri
         val path = contentAddress.path ?: throw Exception("failed to delete file because path is null")
@@ -278,7 +279,7 @@ abstract class ImageProvider {
                     }
 
                     // overwrite now if it was not possible before getting the permission
-                    return deleteSingle(context, contentAddress, secureErase = secureErase && !erased)
+                    return deleteSingle(context, contentAddress, secureErase = secureErase && !erased) || erased
                 }
             }
         }
@@ -291,7 +292,7 @@ abstract class ImageProvider {
         } else if (uri.isFileScheme) {
             val uriFilePath = File(uri.path!!).path
             // URI and path both point to the same non-existent path
-            if (uriFilePath == path) return
+            if (uriFilePath == path) return erased
         }
 
         if (file.exists()) {
@@ -307,6 +308,7 @@ abstract class ImageProvider {
             // in practice, the entry may still be there afterward
             MediaStoreImageProvider.scanObsoletePath(context, uri, path, mimeType)
         }
+        return erased
     }
 
     suspend fun moveMultiple(

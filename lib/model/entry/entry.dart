@@ -8,6 +8,7 @@ import 'package:aves/model/metadata/address.dart';
 import 'package:aves/model/metadata/catalog.dart';
 import 'package:aves/model/metadata/trash.dart';
 import 'package:aves/ref/mime_types.dart';
+import 'package:aves/services/common/image_op_events.dart';
 import 'package:aves/services/common/services.dart';
 import 'package:aves/theme/format.dart';
 import 'package:aves/utils/time_utils.dart';
@@ -485,16 +486,17 @@ class AvesEntry with AvesEntryBase {
     }
   }
 
-  Future<bool> delete() {
-    final opCompleter = Completer<bool>();
+  // returns the deletion event, or `null` if it failed
+  Future<ImageOpEvent?> delete() {
+    final opCompleter = Completer<ImageOpEvent?>();
     mediaEditService
         .delete(entries: {this})
         .listen(
-          (event) => opCompleter.complete(event.success && !event.skipped),
+          (event) => opCompleter.complete(event.success && !event.skipped ? event : null),
           onError: opCompleter.completeError,
           onDone: () {
             if (!opCompleter.isCompleted) {
-              opCompleter.complete(false);
+              opCompleter.complete(null);
             }
           },
         );

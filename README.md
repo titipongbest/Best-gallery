@@ -16,6 +16,8 @@ Refine by NorthXbar
 The version shown in the app (About page and navigation drawer) comes from `version` in `pubspec.yaml`,
 which must be kept in sync with `flavors/pubspec_*.yaml`. Bump it with each update.
 
+- **1.1.0**
+  - secure wipe progress label and a summary of wiped items after deleting
 - **1.0.0**
   - rebranded as Best gallery, with its own app ID and a new icon
   - original modified dates are kept when moving, copying, renaming, exporting, rotating and editing metadata

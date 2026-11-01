@@ -1,4 +1,6 @@
 {
+    "wipeInProgress": "กำลังลบแบบเขียนทับ…",
+    "wipeSuccessFeedback": "{count, plural, other{ลบแบบเขียนทับแล้ว {count} รายการ}}",
     "appLockSettingTitle": "ล็อกแอพด้วย PIN",
     "appLockSettingSubtitle": "ต้องใส่ PIN ทุกครั้งที่เปิดแอพ",
     "appLockWrongPin": "PIN ไม่ถูกต้อง",

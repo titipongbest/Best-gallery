@@ -141,6 +141,7 @@ mixin FeedbackMixin {
     int? itemCount,
     VoidCallback? onCancel,
     Future<void> Function(Set<T> processed)? onDone,
+    String? label,
   }) async {
     final opCompleter = Completer();
     await showAvesDialog<void>(
@@ -150,6 +151,7 @@ mixin FeedbackMixin {
         opStream: opStream,
         itemCount: itemCount,
         onCancel: onCancel,
+        label: label,
         onDone: (processed) async {
           Navigator.maybeOf(context)?.pop();
           await onDone?.call(processed);
@@ -168,6 +170,7 @@ class const ReportOverlay<T>({
   required final int? itemCount,
   required final VoidCallback? onCancel,
   required final void Function(Set<T> processed) onDone,
+  final String? label,
 }) extends StatefulWidget {
   static const routeName = '/dialog/report_overlay';
 
@@ -248,9 +251,13 @@ class _ReportOverlayState<T> extends State<ReportOverlay<T>> with SingleTickerPr
               text = progressFormatter.format(percent);
             }
           }
+          final label = widget.label;
           return FadeTransition(
             opacity: _animation,
-            child: Stack(
+            child: Column(
+              mainAxisSize: .min,
+              children: [
+                Stack(
               alignment: .center,
               children: [
                 Container(
@@ -291,6 +298,27 @@ class _ReportOverlayState<T> extends State<ReportOverlay<T>> with SingleTickerPr
                         child: IconButton(
                           icon: const Icon(AIcons.cancel),
                           onPressed: widget.onCancel,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+                if (label != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Material(
+                      color: theme.isDark ? const Color(0xBB000000) : const Color(0xEEFFFFFF),
+                      shape: const StadiumBorder(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          mainAxisSize: .min,
+                          spacing: 8,
+                          children: [
+                            Icon(AIcons.vaultConfigure, size: 18, color: progressColor),
+                            Text(label),
+                          ],
                         ),
                       ),
                     ),
