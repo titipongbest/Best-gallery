@@ -592,7 +592,8 @@ abstract class ImageProvider {
     }
 
     // set the modified date of the target file to the original one, on a best effort basis
-    private fun restoreDateModified(targetPath: String, dateModifiedMillis: Long?) {
+    private fun restoreDateModified(targetPath: String?, dateModifiedMillis: Long?) {
+        targetPath ?: return
         dateModifiedMillis ?: return
         try {
             val targetFile = File(targetPath)
@@ -644,6 +645,7 @@ abstract class ImageProvider {
                                     val targetFileName = "$targetNameWithoutExtension${extensionFor(mimeType, defaultExtension)}"
                                     val newFile = File(dir, targetFileName)
                                     if (oldFile != newFile) {
+                                        val originalDateModifiedMillis = getSourceDateModifiedMillis(context, oldFile, sourceUri)
                                         newFields = renameSingle(
                                             context = context,
                                             mimeType = mimeType,
@@ -651,6 +653,11 @@ abstract class ImageProvider {
                                             oldPath = sourcePath,
                                             newFile = newFile,
                                         )
+                                        // Best gallery: renaming should not change the modified date
+                                        restoreDateModified(newFile.path, originalDateModifiedMillis)
+                                        if (originalDateModifiedMillis != null && newFields.containsKey(EntryFields.DATE_MODIFIED_MILLIS)) {
+                                            newFields[EntryFields.DATE_MODIFIED_MILLIS] = originalDateModifiedMillis
+                                        }
                                     }
                                 }
                             }
@@ -748,6 +755,7 @@ abstract class ImageProvider {
         var sourceUri = sourceEntry.uri
         val sourcePath = sourceEntry.path
         val pageId = sourceEntry.pageId
+        val sourceDateModifiedMillis = getSourceDateModifiedMillis(context, sourcePath?.let { File(it) }, sourceUri)
 
         var desiredNameWithoutExtension = if (sourcePath != null) {
             val sourceFileName = File(sourcePath).name
@@ -859,6 +867,9 @@ abstract class ImageProvider {
                 write = write,
             )
 
+            // Best gallery: give the exported file the original modified date
+            restoreDateModified(targetPath, sourceDateModifiedMillis)
+
             val newFields = scanNewPath(context, targetPath, exportMimeType)
             val targetUri = (newFields[EntryFields.URI] as String).toUri()
             if (writeMetadata) {
@@ -873,6 +884,9 @@ abstract class ImageProvider {
                         pageId = null,
                     ),
                 )
+                // copying metadata rewrites the file
+                restoreDateModified(targetPath, sourceDateModifiedMillis)
+                sourceDateModifiedMillis?.let { newFields[EntryFields.DATE_MODIFIED_MILLIS] = it }
             }
 
             return newFields
@@ -1677,6 +1691,8 @@ abstract class ImageProvider {
         op: ExifOrientationOp,
         callback: ImageOpCallback,
     ) {
+        // Best gallery: keep the original modified date, as editing metadata rewrites the file
+        val originalDateModifiedMillis = getSourceDateModifiedMillis(context, contentAddress.path?.let { File(it) }, contentAddress.uri)
         val newFields: FieldMap = hashMapOf()
 
         val success = if (contentAddress.mimeType == MimeTypes.MP4) {
@@ -1743,6 +1759,7 @@ abstract class ImageProvider {
         }
 
         if (success) {
+            restoreDateModified(contentAddress.path, originalDateModifiedMillis)
             scanPostMetadataEdit(context, contentAddress, newFields, callback)
         }
     }
@@ -1757,6 +1774,8 @@ abstract class ImageProvider {
         fields: List<String>,
         callback: ImageOpCallback,
     ) {
+        // Best gallery: keep the original modified date, as editing metadata rewrites the file
+        val originalDateModifiedMillis = getSourceDateModifiedMillis(context, contentAddress.path?.let { File(it) }, contentAddress.uri)
         fun editImage(exifInterface: ExifInterface) {
             when {
                 dateMillis != null -> {
@@ -1866,6 +1885,7 @@ abstract class ImageProvider {
         val success = editExif(context, contentAddress, sizeBytes, callback, editImage = ::editImage, editTrailerVideo = ::editTrailerVideo)
 
         if (success) {
+            restoreDateModified(contentAddress.path, originalDateModifiedMillis)
             scanPostMetadataEdit(context, contentAddress, HashMap(), callback)
         }
     }
@@ -1878,6 +1898,8 @@ abstract class ImageProvider {
         autoCorrectTrailerOffset: Boolean,
         callback: ImageOpCallback,
     ) {
+        // Best gallery: keep the original modified date, as editing metadata rewrites the file
+        val originalDateModifiedMillis = getSourceDateModifiedMillis(context, contentAddress.path?.let { File(it) }, contentAddress.uri)
         val newFields: FieldMap = hashMapOf()
         if (modifier.containsKey(TYPE_EXIF)) {
             val fieldsToEdit = HashMap<String, Any?>()
@@ -2009,6 +2031,7 @@ abstract class ImageProvider {
             }
         }
 
+        restoreDateModified(contentAddress.path, originalDateModifiedMillis)
         scanPostMetadataEdit(context, contentAddress, newFields, callback)
     }
 
@@ -2018,6 +2041,8 @@ abstract class ImageProvider {
         sizeBytes: Long,
         callback: ImageOpCallback,
     ) {
+        // Best gallery: keep the original modified date, as editing metadata rewrites the file
+        val originalDateModifiedMillis = getSourceDateModifiedMillis(context, contentAddress.path?.let { File(it) }, contentAddress.uri)
         val uri = contentAddress.uri
 
         // prefer provided `sizeBytes` over file attribute, because the file size
@@ -2057,6 +2082,7 @@ abstract class ImageProvider {
         }
 
         val newFields: FieldMap = hashMapOf()
+        restoreDateModified(contentAddress.path, originalDateModifiedMillis)
         scanPostMetadataEdit(context, contentAddress, newFields, callback)
     }
 
@@ -2067,6 +2093,8 @@ abstract class ImageProvider {
         types: Set<String>,
         callback: ImageOpCallback,
     ) {
+        // Best gallery: keep the original modified date, as editing metadata rewrites the file
+        val originalDateModifiedMillis = getSourceDateModifiedMillis(context, contentAddress.path?.let { File(it) }, contentAddress.uri)
         val mimeType = contentAddress.mimeType
         val uri = contentAddress.uri
 
@@ -2124,6 +2152,7 @@ abstract class ImageProvider {
         }
 
         val newFields: FieldMap = hashMapOf()
+        restoreDateModified(contentAddress.path, originalDateModifiedMillis)
         scanPostMetadataEdit(context, contentAddress, newFields, callback)
     }
 
