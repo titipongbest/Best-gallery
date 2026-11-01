@@ -1,7 +1,7 @@
 {
     "sourceStateLocatingPlaces": "နေရာ တည်နေရာများ",
     "chipActionDelete": "ဖျက်ရန်",
-    "welcomeMessage": "Aves မှ ကြိုဆိုပါတယ်",
+    "welcomeMessage": "Best gallery မှ ကြိုဆိုပါတယ်",
     "columnCount": "{count, plural, other{{count} ကော်လံ}}",
     "@columnCount": {
         "placeholders": {
@@ -11,7 +11,7 @@
             }
         }
     },
-    "appName": "Aves",
+    "appName": "Best gallery",
     "welcomeOptional": "မရွေးဘဲထားနိုင်သည်",
     "welcomeTermsToggle": "စည်းမျဥ်းစည်းကမ်းနှင့် သတ်မှတ်ချက်များကို သဘောတူပါသည်",
     "itemCount": "{count, plural, other{{count} ခု}}",

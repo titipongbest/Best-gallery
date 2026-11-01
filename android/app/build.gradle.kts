@@ -8,7 +8,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Kotlin package of the app classes (kept from Aves)
 val packageName = "deckers.thibault.aves"
+
+// Best gallery: distinct application ID, so that it can be installed alongside the original Aves app
+val appId = "com.titipongbest.bestgallery"
 
 // Keys
 
@@ -60,7 +64,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = packageName
+        applicationId = appId
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

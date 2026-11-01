@@ -1,6 +1,6 @@
 {
-    "appName": "Aves",
-    "welcomeMessage": "Benvingut a Aves",
+    "appName": "Best gallery",
+    "welcomeMessage": "Benvingut a Best gallery",
     "welcomeOptional": "Opcional",
     "welcomeTermsToggle": "Estic d’acord amb els termes i condicions",
     "itemCount": "{count, plural, =1{{count} element} other{{count} elements}}",

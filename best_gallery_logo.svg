@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 72 72">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFEFB"/><stop offset="1" stop-color="#F3EBDD"/>
+    </linearGradient>
+    <linearGradient id="gold" gradientUnits="userSpaceOnUse" x1="32" y1="31" x2="76" y2="77">
+      <stop offset="0" stop-color="#E9D29E"/><stop offset="0.55" stop-color="#C9A363"/><stop offset="1" stop-color="#A9823F"/>
+    </linearGradient>
+  </defs>
+  <rect width="108" height="108" fill="url(#bg)"/>
+  <path d="M41,32 H67 A9,9 0 0 1 76,41 V67 A9,9 0 0 1 67,76 H41 A9,9 0 0 1 32,67 V41 A9,9 0 0 1 41,32 Z" fill="none" stroke="url(#gold)" stroke-width="2"/>
+  <path d="M42,37 H66 A5,5 0 0 1 71,42 V66 A5,5 0 0 1 66,71 H42 A5,5 0 0 1 37,66 V42 A5,5 0 0 1 42,37 Z" fill="none" stroke="url(#gold)" stroke-width="0.6"/>
+  <circle cx="61" cy="47" r="3" fill="url(#gold)"/>
+  <path d="M42.5,64 L50.5,53.5 L56,60 L59.5,56.2 L65.5,64" fill="none" stroke="url(#gold)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

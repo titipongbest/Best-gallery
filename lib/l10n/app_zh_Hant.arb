@@ -1,6 +1,6 @@
 {
-    "appName": "Aves",
-    "welcomeMessage": "歡迎使用 Aves",
+    "appName": "Best gallery",
+    "welcomeMessage": "歡迎使用 Best gallery",
     "welcomeOptional": "可選擇的",
     "welcomeTermsToggle": "我同意這些使用條款及狀況",
     "itemCount": "{count, plural, other{{count} 項}}",

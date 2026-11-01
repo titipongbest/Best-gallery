@@ -1,7 +1,7 @@
 {
-    "welcomeMessage": "Velkommen til Aves",
+    "welcomeMessage": "Velkommen til Best gallery",
     "welcomeOptional": "Valgfri",
-    "appName": "Aves",
+    "appName": "Best gallery",
     "welcomeTermsToggle": "Jeg accepterer vilkårene og betingelserne",
     "itemCount": "{count, plural, =1{{count} element} other{{count} elementer}}",
     "@itemCount": {

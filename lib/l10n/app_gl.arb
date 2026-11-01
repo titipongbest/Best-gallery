@@ -86,8 +86,8 @@
     "keepScreenOnNever": "Nunca",
     "keepScreenOnViewerOnly": "Só páxina do visor",
     "keepScreenOnAlways": "Sempre",
-    "appName": "Aves",
-    "welcomeMessage": "Benvido a Aves",
+    "appName": "Best gallery",
+    "welcomeMessage": "Benvido a Best gallery",
     "itemCount": "{count, plural, =1{{count} elemento} other{{count} elementos}}",
     "@itemCount": {
         "placeholders": {

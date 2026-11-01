@@ -9,8 +9,8 @@
     "sourceStateLoading": "Betöltés",
     "doNotAskAgain": "Ne kérdezd újra",
     "chipActionDelete": "Törlés",
-    "appName": "Aves",
-    "welcomeMessage": "Üdvözöl az Aves",
+    "appName": "Best gallery",
+    "welcomeMessage": "Üdvözöl az Best gallery",
     "cancelTooltip": "Mégse",
     "chipActionCreateAlbum": "Új album",
     "entryActionCopyToClipboard": "Vágolapra másolás",
@@ -489,7 +489,7 @@
     "viewerTransitionZoomIn": "Nagyítás",
     "widgetOpenPageHome": "Kezdőlap megnyitása",
     "widgetOpenPageViewer": "Megtekintő megnyitása",
-    "storageAccessDialogMessage": "Válaszd ki a {directory} mappát a „{volume}” tárhelyen a következő képernyőn, hogy az Aves hozzáférjen.",
+    "storageAccessDialogMessage": "Válaszd ki a {directory} mappát a „{volume}” tárhelyen a következő képernyőn, hogy az Best gallery hozzáférjen.",
     "@storageAccessDialogMessage": {
         "placeholders": {
             "directory": {
@@ -503,7 +503,7 @@
             }
         }
     },
-    "restrictedAccessDialogMessage": "Az Avesnek nincs engedélyezve, hogy módosításokat végezzen a {directory} mappában a „{volume}” tárhelyen.\n\nHasználd a telefon fájlkezelőjét vagy galériáját az elemek másik mappába helyezéséhez.",
+    "restrictedAccessDialogMessage": "Az Best gallerynek nincs engedélyezve, hogy módosításokat végezzen a {directory} mappában a „{volume}” tárhelyen.\n\nHasználd a telefon fájlkezelőjét vagy galériáját az elemek másik mappába helyezéséhez.",
     "@restrictedAccessDialogMessage": {
         "placeholders": {
             "directory": {

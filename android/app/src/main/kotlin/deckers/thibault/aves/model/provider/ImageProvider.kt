@@ -9,6 +9,7 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.provider.BaseColumns
+import android.provider.MediaStore
 import android.util.Log
 import androidx.core.net.toUri
 import com.bumptech.glide.Glide
@@ -427,6 +428,10 @@ abstract class ImageProvider {
         val targetNameWithoutExtension = resolution.nameWithoutExtension ?: return skippedFieldMap
         val targetFile = File(targetDirPath, "$targetNameWithoutExtension.$sourceExtension")
 
+        // Best gallery: remember the original modified date before moving/copying,
+        // so that it can be restored on the target file and sorting by date is not affected
+        val sourceDateModifiedMillis = getSourceDateModifiedMillis(context, sourceFile, sourceUri)
+
         var moveApi: StorageApi? = null
 
         if (sourceDirPath != null) {
@@ -535,6 +540,9 @@ abstract class ImageProvider {
             }
         } ?: throw Exception("failed to get target path")
 
+        // restore the original modified date before the Media Store scans the new file
+        restoreDateModified(effectiveTargetPath, sourceDateModifiedMillis)
+
         val afterMove = System.nanoTime()
         var targetSizeBytes = 0L
         try {
@@ -553,6 +561,48 @@ abstract class ImageProvider {
         } else {
             val fields = scanNewPath(context, effectiveTargetPath, mimeType)
             fields
+        }
+    }
+
+    // retrieve the modified date of the source entry, from the file if possible,
+    // as it is more precise than the one from the Media Store
+    private fun getSourceDateModifiedMillis(context: Context, sourceFile: File?, sourceUri: Uri): Long? {
+        try {
+            sourceFile?.lastModified()?.let { if (it > 0) return it }
+        } catch (ex: SecurityException) {
+            Log.w(LOG_TAG, "failed to get modified date from file=$sourceFile", ex)
+        }
+        if (sourceUri.isContentScheme) {
+            try {
+                val projection = arrayOf(MediaStore.MediaColumns.DATE_MODIFIED)
+                context.contentResolver.query(sourceUri, projection, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val index = cursor.getColumnIndex(MediaStore.MediaColumns.DATE_MODIFIED)
+                        if (index != -1) {
+                            val secs = cursor.getLong(index)
+                            if (secs > 0) return secs * 1000
+                        }
+                    }
+                }
+            } catch (ex: Exception) {
+                Log.w(LOG_TAG, "failed to get modified date from uri=$sourceUri", ex)
+            }
+        }
+        return null
+    }
+
+    // set the modified date of the target file to the original one, on a best effort basis
+    private fun restoreDateModified(targetPath: String, dateModifiedMillis: Long?) {
+        dateModifiedMillis ?: return
+        try {
+            val targetFile = File(targetPath)
+            if (targetFile.exists() && targetFile.lastModified() != dateModifiedMillis) {
+                if (!targetFile.setLastModified(dateModifiedMillis)) {
+                    Log.w(LOG_TAG, "failed to restore modified date=$dateModifiedMillis for file at path=$targetPath")
+                }
+            }
+        } catch (ex: Exception) {
+            Log.w(LOG_TAG, "failed to restore modified date=$dateModifiedMillis for file at path=$targetPath", ex)
         }
     }
 

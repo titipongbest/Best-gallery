@@ -1,5 +1,5 @@
 {
-    "welcomeMessage": "Bun venit la Aves",
+    "welcomeMessage": "Bun venit la Best gallery",
     "welcomeOptional": "Opțional",
     "welcomeTermsToggle": "Sunt de acord cu Termenii și condițiile",
     "timeSeconds": "{count, plural, =1{{count} secundă} other{{count} secunde}}",
@@ -393,7 +393,7 @@
             }
         }
     },
-    "appName": "Aves",
+    "appName": "Best gallery",
     "itemCount": "{count, plural, =1{{count} element} other{{count} elemente}}",
     "@itemCount": {
         "placeholders": {

@@ -1,5 +1,18 @@
 <div align="center">
 
+<img src="best_gallery_logo.svg" alt='Best gallery logo' width="200" />
+
+## Best gallery
+
+Best gallery is a fork of [Aves](https://github.com/deckerst/aves), the gallery and metadata explorer app for Android built with Flutter.
+It keeps the original file dates when moving or copying media, so that items stay sorted as before.
+
+</div>
+
+---
+
+<div align="center">
+
 <img src="https://raw.githubusercontent.com/deckerst/aves/develop/aves_logo.svg" alt='Aves logo' width="200" />
 
 ## Aves
