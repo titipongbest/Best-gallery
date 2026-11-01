@@ -38,7 +38,7 @@ class const AvesLogo({
         backgroundColor: theme.dividerColor,
         radius: size / 2,
         child: CircleAvatar(
-          backgroundColor: const Color(0xff2e2a26),
+          backgroundColor: const Color(0xffe2cca6),
           radius: size / 2 - AvesBorder.curvedBorderWidth(context),
           child: child,
         ),
