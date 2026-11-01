@@ -254,8 +254,9 @@ class _ReportOverlayState<T> extends State<ReportOverlay<T>> with SingleTickerPr
           final label = widget.label;
           return FadeTransition(
             opacity: _animation,
-            child: Column(
-              mainAxisSize: .min,
+            // keep the progress circle centered as before, with the label drawn below it without affecting layout
+            child: Stack(
+              alignment: .center,
               children: [
                 Stack(
               alignment: .center,
@@ -305,8 +306,8 @@ class _ReportOverlayState<T> extends State<ReportOverlay<T>> with SingleTickerPr
               ],
             ),
                 if (label != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
+                  Transform.translate(
+                    offset: const Offset(0, diameter / 2 + 36),
                     child: Material(
                       color: theme.isDark ? const Color(0xBB000000) : const Color(0xEEFFFFFF),
                       shape: const StadiumBorder(),
