@@ -1,4 +1,7 @@
 {
+    "appLockSettingTitle": "ล็อกแอพด้วย PIN",
+    "appLockSettingSubtitle": "ต้องใส่ PIN ทุกครั้งที่เปิดแอพ",
+    "appLockWrongPin": "PIN ไม่ถูกต้อง",
     "welcomeMessage": "ยินดีต้อนรับสู่ Best gallery",
     "appName": "Best gallery",
     "welcomeOptional": "ไม่บังคับเลือก",

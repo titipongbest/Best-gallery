@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aves/model/app_lock.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/model/source/collection_source.dart';
 import 'package:aves/model/vaults/vaults.dart';
@@ -11,6 +12,7 @@ import 'package:aves/widgets/common/action_mixins/permission_aware.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/dialogs/aves_confirmation_dialog.dart';
 import 'package:aves/widgets/dialogs/aves_dialog.dart';
+import 'package:aves/widgets/dialogs/filter_editors/pin_dialog.dart';
 import 'package:aves/widgets/settings/common/tile_leading.dart';
 import 'package:aves/widgets/settings/common/tiles/sub_page.dart';
 import 'package:aves/widgets/settings/common/tiles/switch_list.dart';
@@ -38,6 +40,7 @@ class PrivacySection extends SettingsSection {
   @override
   Future<List<SettingsTile>> tiles(BuildContext context) async {
     return [
+      SettingsTilePrivacyAppLock(),
       SettingsTilePermissions(),
       SettingsTilePrivacyHiddenItems(),
       if (!settings.useTvLayout) SettingsTilePrivacyStorageAccess(),
@@ -179,4 +182,53 @@ class SettingsTilePrivacyStorageAccess extends SettingsTile {
     routeName: StorageAccessPage.routeName,
     builder: (context) => const StorageAccessPage(),
   );
+}
+
+// Best gallery: app lock with a PIN
+class SettingsTilePrivacyAppLock extends SettingsTile {
+  @override
+  List<String> get settingKeys => [];
+
+  @override
+  String title(BuildContext context) => context.l10n.appLockSettingTitle;
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<bool>(
+    valueListenable: appLock.enabled,
+    builder: (context, enabled, child) => SwitchListTile(
+      value: enabled,
+      onChanged: (v) => _toggle(context, v),
+      title: Text(title(context)),
+      subtitle: Text(context.l10n.appLockSettingSubtitle),
+    ),
+  );
+
+  Future<void> _toggle(BuildContext context, bool enable) async {
+    if (enable) {
+      final pin = await showAvesDialog<String>(
+        context: context,
+        builder: (context) => const PinDialog(needConfirmation: true),
+        routeSettings: const RouteSettings(name: PinDialog.routeName),
+      );
+      if (pin != null) {
+        await appLock.setPin(pin);
+      }
+    } else {
+      // ask for the current PIN before removing the lock
+      final pin = await showAvesDialog<String>(
+        context: context,
+        builder: (context) => const PinDialog(needConfirmation: false),
+        routeSettings: const RouteSettings(name: PinDialog.routeName),
+      );
+      if (pin == null) return;
+      if (appLock.check(pin)) {
+        await appLock.setPin(null);
+      } else if (context.mounted) {
+        await showWarningDialog(
+          context: context,
+          message: context.l10n.appLockWrongPin,
+        );
+      }
+    }
+  }
 }

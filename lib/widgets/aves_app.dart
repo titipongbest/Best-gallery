@@ -7,6 +7,7 @@ import 'package:aves/geo/uri.dart';
 import 'package:aves/l10n/l10n.dart';
 import 'package:aves/model/app/intent.dart';
 import 'package:aves/model/app_inventory.dart';
+import 'package:aves/model/app_lock.dart';
 import 'package:aves/model/device.dart';
 import 'package:aves/model/filters/recent.dart';
 import 'package:aves/model/settings/defaults.dart';
@@ -26,6 +27,7 @@ import 'package:aves/theme/icons.dart';
 import 'package:aves/theme/text.dart';
 import 'package:aves/theme/themes.dart';
 import 'package:aves/widgets/about/app_ref.dart';
+import 'package:aves/widgets/app_lock/app_lock_gate.dart';
 import 'package:aves/widgets/collection/collection_grid.dart';
 import 'package:aves/widgets/collection/collection_page.dart';
 import 'package:aves/widgets/common/action_mixins/feedback.dart';
@@ -311,10 +313,12 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
                                   );
                                 },
                                 navigatorObservers: _navigatorObservers,
-                                builder: (context, child) => AvesAppContentDecorator(
-                                  initialized: initialized,
-                                  source: _mediaStoreSource,
-                                  child: child,
+                                builder: (context, child) => AppLockGate(
+                                  child: AvesAppContentDecorator(
+                                    initialized: initialized,
+                                    source: _mediaStoreSource,
+                                    child: child,
+                                  ),
                                 ),
                                 onGenerateTitle: (context) => context.l10n.appName,
                                 theme: lightTheme,
@@ -376,7 +380,11 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
           default:
             break;
         }
+      case .hidden:
+      case .paused:
+        appLock.onBackground();
       case .resumed:
+        appLock.onForeground();
         availability.onResume();
         RecentlyAddedFilter.updateNow();
         _mediaStoreSource.checkForChanges();
@@ -442,6 +450,8 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
   Future<void> _setup() async {
     final stopwatch = Stopwatch()..start();
 
+    // Best gallery: load the app lock state before showing any content
+    await appLock.init();
     await device.init();
     await mobileServices.init();
     await settings.init(monitorPlatformSettings: true, shouldSanitize: true);

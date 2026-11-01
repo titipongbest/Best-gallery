@@ -1,4 +1,7 @@
 {
+  "appLockSettingTitle": "App lock",
+  "appLockSettingSubtitle": "Ask for a PIN when opening the app",
+  "appLockWrongPin": "Wrong PIN",
   "appName": "Best gallery",
   "welcomeMessage": "Welcome to Best gallery",
   "welcomeOptional": "Optional",
