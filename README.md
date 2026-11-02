@@ -16,6 +16,8 @@ Refine by NorthXbar
 The version shown in the app (About page and navigation drawer) comes from `version` in `pubspec.yaml`,
 which must be kept in sync with `flavors/pubspec_*.yaml`. Bump it with each update.
 
+- **1.4.0**
+  - "Dawn Light" (แสงอุษา) theme: sunrise coral accent with lavender and morning gold companions, blush cream light surfaces and pre-dawn violet dark surfaces (layout and features unchanged)
 - **1.3.0**
   - "Peacock Jewel" theme: peacock teal accent with orchid and gold companions, pearl light surfaces and midnight dark surfaces (layout and features unchanged)
 - **1.2.0**

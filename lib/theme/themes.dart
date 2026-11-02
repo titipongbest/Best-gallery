@@ -172,16 +172,16 @@ class Themes {
 
   // light
 
-  // Best gallery "Peacock Jewel" palette: pearl surfaces, ink navy text, jewel accents
-  static const _lightInk = Color(0xff1f2630);
-  static const _lightThemeTypoBodyColor = Color(0xdd1f2630);
+  // Best gallery "Dawn Light" (แสงอุษา) palette: blush cream surfaces, plum ink text, sunrise accents
+  static const _lightInk = Color(0xff3a2630);
+  static const _lightThemeTypoBodyColor = Color(0xdd3a2630);
   static final _lightThemeTypo = _typography.black.apply(
     bodyColor: _lightThemeTypoBodyColor,
     displayColor: _lightThemeTypoBodyColor,
   );
-  static const _lightTitleColor = Color(0xff0b5e5e);
+  static const _lightTitleColor = Color(0xffa8434f);
   static const _lightLabelColor = _lightThemeTypoBodyColor;
-  static const _lightActionIconColor = Color(0xbb1f2630);
+  static const _lightActionIconColor = Color(0xbb3a2630);
   static const _lightOnSurface = _lightInk;
 
   static ThemeData lightTheme(Color accentColor, bool deviceInitialized, KnownLocale locale) {
@@ -197,15 +197,15 @@ class Themes {
       tertiary: isDefault ? AvesColorsData.defaultTertiary : null,
       onTertiary: isDefault ? Colors.white : null,
       onSurface: _lightOnSurface,
-      onSurfaceVariant: const Color(0xff5b6470),
-      surface: const Color(0xfffbf9f6),
+      onSurfaceVariant: const Color(0xff6e5560),
+      surface: const Color(0xfffff8f3),
       surfaceContainerLowest: const Color(0xffffffff),
-      surfaceContainerLow: const Color(0xfff5f2f4),
-      surfaceContainer: const Color(0xffefedf1),
-      surfaceContainerHigh: const Color(0xffe8e6ee),
-      surfaceContainerHighest: const Color(0xffe0dee8),
-      outline: const Color(0xff8a8f9a),
-      outlineVariant: const Color(0xffd9d3e3),
+      surfaceContainerLow: const Color(0xfffcefe8),
+      surfaceContainer: const Color(0xfff9e8e0),
+      surfaceContainerHigh: const Color(0xfff5e0d7),
+      surfaceContainerHighest: const Color(0xfff0d7cd),
+      outline: const Color(0xff9c8590),
+      outlineVariant: const Color(0xffecd3d0),
     );
     final textTheme = _lightThemeTypo;
     return _baseTheme(colors, deviceInitialized).copyWith(
@@ -255,18 +255,18 @@ class Themes {
       primary: accentColor,
       onPrimary: onAccent,
       secondary: isDefault ? AvesColorsData.defaultDarkSecondary : accentColor,
-      onSecondary: isDefault ? const Color(0xff10141b) : onAccent,
+      onSecondary: isDefault ? const Color(0xff1b1626) : onAccent,
       tertiary: isDefault ? AvesColorsData.defaultDarkTertiary : null,
-      onTertiary: isDefault ? const Color(0xff10141b) : null,
+      onTertiary: isDefault ? const Color(0xff1b1626) : null,
       onSurface: _darkOnSurface,
-      // deep midnight surfaces
-      surface: const Color(0xff10141b),
-      surfaceContainerLowest: const Color(0xff0b0e13),
-      surfaceContainerLow: const Color(0xff141922),
-      surfaceContainer: const Color(0xff182030),
-      surfaceContainerHigh: const Color(0xff1f2839),
-      surfaceContainerHighest: const Color(0xff283246),
-      outlineVariant: const Color(0xff34405a),
+      // deep pre-dawn violet surfaces
+      surface: const Color(0xff1b1626),
+      surfaceContainerLowest: const Color(0xff15111e),
+      surfaceContainerLow: const Color(0xff201a2d),
+      surfaceContainer: const Color(0xff261f35),
+      surfaceContainerHigh: const Color(0xff2f2740),
+      surfaceContainerHighest: const Color(0xff3a304c),
+      outlineVariant: const Color(0xff4a3e5c),
     );
     return colors;
   }
