@@ -17,9 +17,14 @@ class const AvesLogo({
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    Widget child = CustomPaint(
-      size: Size(size / 1.4, size / 1.4),
-      painter: AvesLogoPainter(),
+    Widget child = ClipOval(
+      child: Image.asset(
+        'assets/best_gallery_icon.png',
+        width: size * .9,
+        height: size * .9,
+        fit: BoxFit.cover,
+        filterQuality: FilterQuality.medium,
+      ),
     );
     if (context.select<Settings, bool>((v) => v.themeColorMode == AvesThemeColorMode.monochrome)) {
       final tint = Color.lerp(theme.colorScheme.primary, Colors.white, .5)!;
@@ -38,7 +43,7 @@ class const AvesLogo({
         backgroundColor: theme.dividerColor,
         radius: size / 2,
         child: CircleAvatar(
-          backgroundColor: const Color(0xffe2cca6),
+          backgroundColor: const Color(0xfffdf9f1),
           radius: size / 2 - AvesBorder.curvedBorderWidth(context),
           child: child,
         ),
