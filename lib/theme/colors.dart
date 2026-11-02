@@ -54,9 +54,13 @@ class AvesColorsProvider extends StatelessWidget {
 }
 
 abstract class AvesColorsData {
-  // Best gallery champagne gold, matching the app icon
-  static const defaultAccent = Color(0xffa9823f);
-  static const defaultDarkAccent = Color(0xffc9a363);
+  // Best gallery "Peacock Jewel" palette: peacock teal, with orchid and gold companions
+  static const defaultAccent = Color(0xff0f7a7a);
+  static const defaultDarkAccent = Color(0xff4fd1c5);
+  static const defaultSecondary = Color(0xffb4457a);
+  static const defaultDarkSecondary = Color(0xfff28db8);
+  static const defaultTertiary = Color(0xffc08a2e);
+  static const defaultDarkTertiary = Color(0xffe5c07b);
   static const _neutralOnDark = Colors.white;
   static const _neutralOnLight = Color(0xAA000000);
 
