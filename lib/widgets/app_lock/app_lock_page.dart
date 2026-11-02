@@ -16,7 +16,10 @@ class _AppLockPageState extends State<AppLockPage> {
   final _controller = PinInputController();
   bool _error = false;
 
-  static const _gold = Color(0xff8e6a2e);
+  static const _ink = Color(0xff141a3a);
+  static const _muted = Color(0xff5d6890);
+  static const _blue = Color(0xff2f5bea);
+  static const _cellFill = Color(0xffe9eef9);
 
   @override
   void dispose() {
@@ -27,67 +30,121 @@ class _AppLockPageState extends State<AppLockPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final cellShadow = [
+      BoxShadow(color: const Color(0xff2f4bb0).withValues(alpha: .10), blurRadius: 10, offset: const Offset(3, 4)),
+      const BoxShadow(color: Colors.white, blurRadius: 8, offset: Offset(-3, -3)),
+    ];
     return Material(
-        child: DecoratedBox(
-          decoration: const BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment(-.3, -.5),
-              radius: 1.3,
-              colors: [Color(0xfff3e6cf), Color(0xffe2cca6), Color(0xffc9ab7c)],
-              stops: [0, .55, 1],
-            ),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xfff2f5fc), Color(0xffe6ecf8), Color(0xffdfe6f6)],
+            stops: [0, .6, 1],
           ),
-          child: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 360),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CustomPaint(
-                        size: Size(96, 112),
-                        painter: ShieldLogoPainter(),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Secure by NorthX',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: _gold,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.2,
+        ),
+        child: Stack(
+          children: [
+            // decorative rings and glass orbs
+            const Positioned(left: -110, top: -90, child: _GlassRing(size: 230)),
+            const Positioned(right: -40, top: 220, child: _GlassOrb(size: 110)),
+            const Positioned(right: -90, bottom: -80, child: _GlassOrb(size: 210)),
+            const Positioned(left: -90, bottom: -110, child: _GlassRing(size: 190)),
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 360),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 132,
+                          height: 132,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: const BorderRadius.all(Radius.circular(38)),
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xfff7f9fe), Color(0xffe7edf9)],
+                            ),
+                            border: Border.all(color: Colors.white.withValues(alpha: .9)),
+                            boxShadow: [
+                              BoxShadow(color: const Color(0xff2f4bb0).withValues(alpha: .16), blurRadius: 22, offset: const Offset(8, 10)),
+                              const BoxShadow(color: Colors.white, blurRadius: 16, offset: Offset(-6, -6)),
+                            ],
+                          ),
+                          child: const CustomPaint(
+                            size: Size(72, 84),
+                            painter: ShieldLogoPainter(),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 32),
-                      Text(
-                        _error ? l10n.appLockWrongPin : l10n.pinDialogEnter,
-                        style: TextStyle(
-                          color: _error ? const Color(0xffb3261e) : const Color(0xff4a3a22),
-                          fontSize: 16,
+                        const SizedBox(height: 26),
+                        const Text(
+                          'Best gallery',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: _ink, fontSize: 30, fontWeight: FontWeight.w700),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      MaterialPinField(
-                        length: 4,
-                        pinController: _controller,
-                        keyboardType: TextInputType.number,
-                        autoFocus: true,
-                        obscureText: true,
-                        onChanged: (v) {
-                          if (_error && v.isNotEmpty) setState(() => _error = false);
-                        },
-                        onCompleted: _submit,
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        const Text(
+                          'SECURE BY NORTHX',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: _muted, fontSize: 12, letterSpacing: 3),
+                        ),
+                        const SizedBox(height: 40),
+                        Text(
+                          _error ? l10n.appLockWrongPin : l10n.pinDialogEnter,
+                          style: TextStyle(
+                            color: _error ? const Color(0xffd32f2f) : const Color(0xff4a5578),
+                            fontSize: 15,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        MaterialPinField(
+                          length: 4,
+                          pinController: _controller,
+                          keyboardType: TextInputType.number,
+                          autoFocus: true,
+                          obscureText: true,
+                          theme: MaterialPinTheme(
+                            shape: MaterialPinShape.outlined,
+                            cellSize: const Size(56, 64),
+                            spacing: 14,
+                            borderRadius: const BorderRadius.all(Radius.circular(18)),
+                            fillColor: _cellFill,
+                            focusedFillColor: _cellFill,
+                            filledFillColor: _cellFill,
+                            borderColor: Colors.white,
+                            focusedBorderColor: const Color(0xff7aa0ff),
+                            filledBorderColor: Colors.white,
+                            textStyle: const TextStyle(color: _blue, fontSize: 24, fontWeight: FontWeight.w700),
+                            cursorColor: _blue,
+                            boxShadows: cellShadow,
+                            focusedBoxShadows: cellShadow,
+                          ),
+                          onChanged: (v) {
+                            if (_error && v.isNotEmpty) setState(() => _error = false);
+                          },
+                          onCompleted: _submit,
+                        ),
+                        const SizedBox(height: 56),
+                        const Text(
+                          'REFINE BY NORTHXBAR',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: _muted, fontSize: 10, letterSpacing: 3),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
+      ),
     );
   }
 
@@ -99,7 +156,7 @@ class _AppLockPageState extends State<AppLockPage> {
   }
 }
 
-// shield with a keyhole, in champagne gold
+// glossy blue shield with a keyhole
 class const ShieldLogoPainter() extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -125,7 +182,7 @@ class const ShieldLogoPainter() extends CustomPainter {
     canvas.drawPath(
       outer.shift(const Offset(0, 4)),
       Paint()
-        ..color = const Color(0x335a3e12)
+        ..color = const Color(0x552f4bb0)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
     );
     // gold bezel
@@ -135,7 +192,7 @@ class const ShieldLogoPainter() extends CustomPainter {
         ..shader = ui.Gradient.linear(
           Offset.zero,
           Offset(w, h),
-          const [Color(0xfff5e3b5), Color(0xffd8b677), Color(0xffb8904e), Color(0xffe2c68c)],
+          const [Color(0xffa9c4ff), Color(0xff4f8bff), Color(0xff2f5bea), Color(0xff1f3cc0)],
           const [0, .35, .7, 1],
         ),
     );
@@ -146,7 +203,7 @@ class const ShieldLogoPainter() extends CustomPainter {
         ..shader = ui.Gradient.linear(
           Offset(0, h * .1),
           Offset(0, h * .9),
-          const [Color(0xfffffdf8), Color(0xfff6e7c9)],
+          const [Color(0xff6f9bff), Color(0xff2a44c9)],
         ),
     );
     // keyhole
@@ -154,7 +211,7 @@ class const ShieldLogoPainter() extends CustomPainter {
       ..shader = ui.Gradient.linear(
         Offset(w * .4, h * .35),
         Offset(w * .6, h * .7),
-        const [Color(0xffd3ae6a), Color(0xff9c7333)],
+        const [Color(0xffffffff), Color(0xffe3ebff)],
       );
     final cx = w / 2;
     canvas.drawCircle(Offset(cx, h * .42), w * .1, keyPaint);
@@ -184,4 +241,39 @@ class const ShieldLogoPainter() extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class const _GlassOrb({required final double size}) extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const RadialGradient(
+          center: Alignment(-.3, -.4),
+          colors: [Colors.white, Color(0xffcdd9f6), Color(0xffa9bdf0)],
+          stops: [0, .55, 1],
+        ),
+        boxShadow: [
+          BoxShadow(color: const Color(0xff4664dc).withValues(alpha: .15), blurRadius: 24, offset: const Offset(0, 10)),
+        ],
+      ),
+    );
+  }
+}
+
+class const _GlassRing({required final double size}) extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xff6e8cf0).withValues(alpha: .35), width: 10),
+      ),
+    );
+  }
 }

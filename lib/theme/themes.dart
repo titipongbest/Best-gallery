@@ -56,13 +56,22 @@ class Themes {
       cardColor: _schemeCardLayer(colors),
       colorScheme: colors,
       dividerColor: colors.outlineVariant,
+      shadowColor: const Color(0xff2f4bb0),
       scaffoldBackgroundColor: _schemeFirstLayer(colors),
       // TYPOGRAPHY & ICONOGRAPHY
       iconTheme: _iconTheme(colors),
       typography: _typography,
       // COMPONENT THEMES
       bottomNavigationBarTheme: _bottomNavigationBarTheme(colors),
+      cardTheme: const CardThemeData(
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
+      ),
       checkboxTheme: _checkboxTheme(colors),
+      chipTheme: const ChipThemeData(shape: StadiumBorder()),
+      elevatedButtonTheme: ElevatedButtonThemeData(style: ElevatedButton.styleFrom(shape: const StadiumBorder())),
+      filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(shape: const StadiumBorder())),
+      outlinedButtonTheme: OutlinedButtonThemeData(style: OutlinedButton.styleFrom(shape: const StadiumBorder())),
       drawerTheme: _drawerTheme(colors),
       floatingActionButtonTheme: _floatingActionButtonTheme(colors),
       navigationRailTheme: NavigationRailThemeData(
@@ -113,6 +122,7 @@ class Themes {
   static PopupMenuThemeData _popupMenuTheme(ColorScheme colors, TextTheme textTheme) {
     return PopupMenuThemeData(
       color: _schemeSecondLayer(colors),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(18))),
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
         // adapted from M3 defaults
         final TextStyle style = textTheme.labelLarge!;
@@ -129,6 +139,8 @@ class Themes {
     return FloatingActionButtonThemeData(
       foregroundColor: colors.onPrimary,
       backgroundColor: colors.primary,
+      elevation: 8,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
     );
   }
 
@@ -164,6 +176,7 @@ class Themes {
   static SnackBarThemeData _snackBarTheme(ColorScheme colors) => SnackBarThemeData(
     actionTextColor: colors.primary,
     behavior: SnackBarBehavior.floating,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
   );
 
   static const _tooltipTheme = TooltipThemeData(
@@ -172,16 +185,16 @@ class Themes {
 
   // light
 
-  // Best gallery "Dawn Light" (แสงอุษา) palette: blush cream surfaces, plum ink text, sunrise accents
-  static const _lightInk = Color(0xff3a2630);
-  static const _lightThemeTypoBodyColor = Color(0xdd3a2630);
+  // Best gallery "Azure Glass" palette: frosted periwinkle surfaces, deep navy text, royal blue accents
+  static const _lightInk = Color(0xff141a3a);
+  static const _lightThemeTypoBodyColor = Color(0xdd141a3a);
   static final _lightThemeTypo = _typography.black.apply(
     bodyColor: _lightThemeTypoBodyColor,
     displayColor: _lightThemeTypoBodyColor,
   );
-  static const _lightTitleColor = Color(0xffa8434f);
+  static const _lightTitleColor = Color(0xff141a3a);
   static const _lightLabelColor = _lightThemeTypoBodyColor;
-  static const _lightActionIconColor = Color(0xbb3a2630);
+  static const _lightActionIconColor = Color(0xff2f5bea);
   static const _lightOnSurface = _lightInk;
 
   static ThemeData lightTheme(Color accentColor, bool deviceInitialized, KnownLocale locale) {
@@ -197,15 +210,15 @@ class Themes {
       tertiary: isDefault ? AvesColorsData.defaultTertiary : null,
       onTertiary: isDefault ? Colors.white : null,
       onSurface: _lightOnSurface,
-      onSurfaceVariant: const Color(0xff6e5560),
-      surface: const Color(0xfffff8f3),
+      onSurfaceVariant: const Color(0xff5d6890),
+      surface: const Color(0xfff2f5fc),
       surfaceContainerLowest: const Color(0xffffffff),
-      surfaceContainerLow: const Color(0xfffcefe8),
-      surfaceContainer: const Color(0xfff9e8e0),
-      surfaceContainerHigh: const Color(0xfff5e0d7),
-      surfaceContainerHighest: const Color(0xfff0d7cd),
-      outline: const Color(0xff9c8590),
-      outlineVariant: const Color(0xffecd3d0),
+      surfaceContainerLow: const Color(0xfff7f9fe),
+      surfaceContainer: const Color(0xffeaeff9),
+      surfaceContainerHigh: const Color(0xffe2e9f7),
+      surfaceContainerHighest: const Color(0xffd8e1f4),
+      outline: const Color(0xff8a94b8),
+      outlineVariant: const Color(0xffd3dcf2),
     );
     final textTheme = _lightThemeTypo;
     return _baseTheme(colors, deviceInitialized).copyWith(
@@ -223,6 +236,7 @@ class Themes {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: _schemeSecondLayer(colors),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(28))),
         titleTextStyle: AStyles.pageTitleTextStyle(locale).copyWith(color: _lightTitleColor),
       ),
       listTileTheme: _listTileTheme.copyWith(
@@ -255,18 +269,18 @@ class Themes {
       primary: accentColor,
       onPrimary: onAccent,
       secondary: isDefault ? AvesColorsData.defaultDarkSecondary : accentColor,
-      onSecondary: isDefault ? const Color(0xff1b1626) : onAccent,
+      onSecondary: isDefault ? const Color(0xff0e1330) : onAccent,
       tertiary: isDefault ? AvesColorsData.defaultDarkTertiary : null,
-      onTertiary: isDefault ? const Color(0xff1b1626) : null,
+      onTertiary: isDefault ? const Color(0xff0e1330) : null,
       onSurface: _darkOnSurface,
-      // deep pre-dawn violet surfaces
-      surface: const Color(0xff1b1626),
-      surfaceContainerLowest: const Color(0xff15111e),
-      surfaceContainerLow: const Color(0xff201a2d),
-      surfaceContainer: const Color(0xff261f35),
-      surfaceContainerHigh: const Color(0xff2f2740),
-      surfaceContainerHighest: const Color(0xff3a304c),
-      outlineVariant: const Color(0xff4a3e5c),
+      // deep night navy surfaces
+      surface: const Color(0xff0e1330),
+      surfaceContainerLowest: const Color(0xff0a0e26),
+      surfaceContainerLow: const Color(0xff131a3d),
+      surfaceContainer: const Color(0xff18204a),
+      surfaceContainerHigh: const Color(0xff1f2856),
+      surfaceContainerHighest: const Color(0xff283263),
+      outlineVariant: const Color(0xff2f3a70),
     );
     return colors;
   }
@@ -288,6 +302,7 @@ class Themes {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: _schemeSecondLayer(colors),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(28))),
         titleTextStyle: AStyles.pageTitleTextStyle(locale).copyWith(color: _darkTitleColor),
       ),
       listTileTheme: _listTileTheme,
