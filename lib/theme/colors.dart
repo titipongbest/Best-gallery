@@ -54,7 +54,9 @@ class AvesColorsProvider extends StatelessWidget {
 }
 
 abstract class AvesColorsData {
-  static const defaultAccent = Colors.indigoAccent;
+  // Best gallery champagne gold, matching the app icon
+  static const defaultAccent = Color(0xffa9823f);
+  static const defaultDarkAccent = Color(0xffc9a363);
   static const _neutralOnDark = Colors.white;
   static const _neutralOnLight = Color(0xAA000000);
 

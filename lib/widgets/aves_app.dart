@@ -267,8 +267,7 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
                   final (settingsLocale, themeBrightness, enableDynamicColor) = s;
                   return DynamicColorBuilder(
                     builder: (lightScheme, darkScheme) {
-                      const defaultAccent = AvesColorsData.defaultAccent;
-                      Color lightAccent = defaultAccent, darkAccent = defaultAccent;
+                      Color lightAccent = AvesColorsData.defaultAccent, darkAccent = AvesColorsData.defaultDarkAccent;
                       if (enableDynamicColor) {
                         lightAccent = lightScheme?.primary ?? lightAccent;
                         darkAccent = darkScheme?.primary ?? darkAccent;

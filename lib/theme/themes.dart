@@ -171,11 +171,17 @@ class Themes {
 
   // light
 
-  static final _lightThemeTypo = _typography.black;
-  static final _lightTitleColor = _lightThemeTypo.titleMedium!.color!;
-  static final _lightLabelColor = _lightThemeTypo.labelMedium!.color!;
-  static const _lightActionIconColor = Color(0xAA000000);
-  static const _lightOnSurface = Colors.black;
+  // Best gallery "Champagne Ivory" palette, matching the app icon
+  static const _lightInk = Color(0xff2b2419);
+  static const _lightThemeTypoBodyColor = Color(0xdd2b2419);
+  static final _lightThemeTypo = _typography.black.apply(
+    bodyColor: _lightThemeTypoBodyColor,
+    displayColor: _lightThemeTypoBodyColor,
+  );
+  static const _lightTitleColor = _lightThemeTypoBodyColor;
+  static const _lightLabelColor = _lightThemeTypoBodyColor;
+  static const _lightActionIconColor = Color(0xbb2b2419);
+  static const _lightOnSurface = _lightInk;
 
   static ThemeData lightTheme(Color accentColor, bool deviceInitialized, KnownLocale locale) {
     final onAccent = ColorUtils.textColorOn(accentColor);
@@ -187,6 +193,15 @@ class Themes {
       secondary: accentColor,
       onSecondary: onAccent,
       onSurface: _lightOnSurface,
+      onSurfaceVariant: const Color(0xff6b5d48),
+      surface: const Color(0xfffaf6ee),
+      surfaceContainerLowest: const Color(0xffffffff),
+      surfaceContainerLow: const Color(0xfff6efe2),
+      surfaceContainer: const Color(0xfff3eadb),
+      surfaceContainerHigh: const Color(0xffeee2cd),
+      surfaceContainerHighest: const Color(0xffe8d9bf),
+      outline: const Color(0xffa8957a),
+      outlineVariant: const Color(0xffe2cca6),
     );
     final textTheme = _lightThemeTypo;
     return _baseTheme(colors, deviceInitialized).copyWith(
@@ -237,6 +252,14 @@ class Themes {
       secondary: accentColor,
       onSecondary: onAccent,
       onSurface: _darkOnSurface,
+      // warm espresso surfaces
+      surface: const Color(0xff1a1612),
+      surfaceContainerLowest: const Color(0xff15120e),
+      surfaceContainerLow: const Color(0xff1f1a15),
+      surfaceContainer: const Color(0xff241e18),
+      surfaceContainerHigh: const Color(0xff2d261f),
+      surfaceContainerHighest: const Color(0xff372e25),
+      outlineVariant: const Color(0xff4a3f31),
     );
     return colors;
   }

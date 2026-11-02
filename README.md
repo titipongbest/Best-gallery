@@ -16,6 +16,8 @@ Refine by NorthXbar
 The version shown in the app (About page and navigation drawer) comes from `version` in `pubspec.yaml`,
 which must be kept in sync with `flavors/pubspec_*.yaml`. Bump it with each update.
 
+- **1.2.0**
+  - "Champagne Ivory" theme: champagne gold accent, ivory light surfaces and warm espresso dark surfaces (layout and features unchanged)
 - **1.1.1**
   - progress circle back in the center of the screen during deletion, with the wipe label below it
 - **1.1.0**
