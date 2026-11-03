@@ -7,6 +7,7 @@
     "appLockSettingTitle": "ล็อกแอพด้วย PIN",
     "appLockSettingSubtitle": "ต้องใส่ PIN ทุกครั้งที่เปิดแอพ",
     "appLockWrongPin": "PIN ไม่ถูกต้อง",
+    "megaDownloadingVideo": "กำลังโหลดวิดีโอ… {percent}%",
     "megaLockSettingTitle": "ล็อกหน้า MEGA ด้วย PIN",
     "megaLockSettingSubtitle": "ต้องใส่ PIN ทุกครั้งที่เปิดหน้า MEGA",
     "crashLogPageTitle": "บันทึกข้อผิดพลาด",

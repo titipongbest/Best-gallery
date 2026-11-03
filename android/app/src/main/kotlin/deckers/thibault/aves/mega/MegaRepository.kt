@@ -243,6 +243,12 @@ object MegaRepository {
         return target
     }
 
+    // bytes downloaded so far by `getFile`, or null when no download is in progress
+    fun getDownloadedBytes(context: Context, handle: String): Long? {
+        val temp = File(filesDir(context), "$handle.part")
+        return if (temp.exists()) temp.length() else null
+    }
+
     // first bytes of a file, enough to read dimensions and EXIF metadata in most cases
     fun getHead(context: Context, node: MegaNode, length: Long): File {
         val full = File(filesDir(context), node.handle)

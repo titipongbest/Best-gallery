@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aves/services/common/channel.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -120,6 +122,9 @@ abstract class MegaService {
 
   // path of the decrypted file in the cache, downloaded if needed
   Future<String?> getLocalFilePath(String uri);
+
+  // download progress of `getLocalFilePath`, from 0 to 1, or null when not downloading
+  Future<double?> getDownloadProgress(String uri);
 }
 
 class PlatformMegaService implements MegaService {
@@ -190,4 +195,42 @@ class PlatformMegaService implements MegaService {
       return null;
     }
   }
+
+  @override
+  Future<double?> getDownloadProgress(String uri) async {
+    try {
+      final result = await _platform.invokeMethod('getDownloadProgress', <String, dynamic>{'uri': uri});
+      if (result is Map) {
+        final downloaded = (result['downloaded'] as num?)?.toDouble() ?? 0;
+        final total = (result['total'] as num?)?.toDouble() ?? 0;
+        if (total > 0) return (downloaded / total).clamp(0, 1);
+      }
+    } on PlatformException catch (_) {
+      // ignore
+    }
+    return null;
+  }
+}
+
+// files being downloaded for playback, by URI, with their progress from 0 to 1
+class MegaDownloads {
+  static final ValueNotifier<Map<String, double>> progress = ValueNotifier(const {});
+
+  static const _pollInterval = Duration(milliseconds: 400);
+
+  static Future<String?> getLocalFilePath(String uri) async {
+    _set(uri, 0);
+    final timer = Timer.periodic(_pollInterval, (_) async {
+      final value = await megaService.getDownloadProgress(uri);
+      if (value != null && progress.value.containsKey(uri)) _set(uri, value);
+    });
+    try {
+      return await megaService.getLocalFilePath(uri);
+    } finally {
+      timer.cancel();
+      progress.value = Map.of(progress.value)..remove(uri);
+    }
+  }
+
+  static void _set(String uri, double value) => progress.value = Map.of(progress.value)..[uri] = value;
 }

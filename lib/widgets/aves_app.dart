@@ -462,7 +462,7 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
     await appLock.init();
     await megaLock.init();
     // MEGA videos are downloaded before playing, as players open content on the main thread
-    MediaUris.resolver = (uri) async => uri.startsWith('content://${device.packageName}.mega/') ? await megaService.getLocalFilePath(uri) : null;
+    MediaUris.resolver = (uri) async => uri.startsWith('content://${device.packageName}.mega/') ? await MegaDownloads.getLocalFilePath(uri) : null;
     await device.init();
     await mobileServices.init();
     await settings.init(monitorPlatformSettings: true, shouldSanitize: true);

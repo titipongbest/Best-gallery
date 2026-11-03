@@ -26,6 +26,7 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
             "listFolder" -> ioScope.launch { safe(call, result, ::listFolder) }
             "clearCache" -> ioScope.launch { safe(call, result, ::clearCache) }
             "getLocalFile" -> ioScope.launch { safe(call, result, ::getLocalFile) }
+            "getDownloadProgress" -> ioScope.launch { safe(call, result, ::getDownloadProgress) }
             else -> result.notImplemented()
         }
     }
@@ -81,6 +82,17 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
         } catch (e: Exception) {
             reportError(result, "getLocalFile", e)
         }
+    }
+
+    private fun getDownloadProgress(call: MethodCall, result: MethodChannel.Result) {
+        val handle = call.argument<String>("uri")?.let { MegaRepository.handleFromUri(android.net.Uri.parse(it)) }
+        val node = handle?.let { MegaRepository.getNode(context, it) }
+        val downloaded = handle?.let { MegaRepository.getDownloadedBytes(context, it) }
+        if (node == null || downloaded == null) {
+            result.success(null)
+            return
+        }
+        result.success(hashMapOf("downloaded" to downloaded, "total" to node.size))
     }
 
     private fun clearCache(@Suppress("unused_parameter") call: MethodCall, result: MethodChannel.Result) {

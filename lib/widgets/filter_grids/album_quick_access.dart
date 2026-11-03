@@ -5,10 +5,7 @@ import 'package:aves/model/filters/recent.dart';
 import 'package:aves/model/filters/trash.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/model/source/collection_source.dart';
-import 'package:aves/theme/icons.dart';
 import 'package:aves/widgets/collection/collection_page.dart';
-import 'package:aves/widgets/common/extensions/build_context.dart';
-import 'package:aves/widgets/mega/mega_page.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
@@ -50,19 +47,6 @@ class const AlbumQuickAccessBar({
                               filters: {filter},
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                    // MEGA cloud drive
-                    _QuickTile(
-                      icon: const Icon(AIcons.cloud, size: 20),
-                      label: context.l10n.megaPageTitle,
-                      value: null,
-                      height: _tileHeight,
-                      onTap: () => Navigator.maybeOf(context)?.push(
-                        MaterialPageRoute(
-                          settings: const RouteSettings(name: MegaPage.routeName),
-                          builder: (context) => const MegaPage(),
                         ),
                       ),
                     ),

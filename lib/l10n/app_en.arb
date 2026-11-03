@@ -9,6 +9,8 @@
   "appLockSettingTitle": "App lock",
   "appLockSettingSubtitle": "Ask for a PIN when opening the app",
   "appLockWrongPin": "Wrong PIN",
+  "megaDownloadingVideo": "Downloading video… {percent}%",
+  "@megaDownloadingVideo": {"placeholders": {"percent": {"type": "int"}}},
   "megaLockSettingTitle": "MEGA lock",
   "megaLockSettingSubtitle": "Ask for a PIN when opening MEGA",
   "crashLogPageTitle": "Crash log",
