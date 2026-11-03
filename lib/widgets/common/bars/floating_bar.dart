@@ -78,7 +78,7 @@ class _AvesFloatingBarState extends State<AvesFloatingBar> with RouteAware {
             borderRadius: AvesFloatingBar.borderRadius,
             boxShadow: [
               BoxShadow(
-                color: const Color(0xff2f4bb0).withValues(alpha: isDark ? .35 : .16),
+                color: const Color(0xff9a6410).withValues(alpha: isDark ? .35 : .16),
                 blurRadius: 22,
                 offset: const Offset(0, 8),
               ),

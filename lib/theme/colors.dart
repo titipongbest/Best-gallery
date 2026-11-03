@@ -54,13 +54,13 @@ class AvesColorsProvider extends StatelessWidget {
 }
 
 abstract class AvesColorsData {
-  // Best gallery "Azure Glass" palette: royal blue, with sky blue and mint companions
-  static const defaultAccent = Color(0xff2f5bea);
-  static const defaultDarkAccent = Color(0xff8fb0ff);
-  static const defaultSecondary = Color(0xff4f8bff);
-  static const defaultDarkSecondary = Color(0xffa9c4ff);
-  static const defaultTertiary = Color(0xff2f9e8a);
-  static const defaultDarkTertiary = Color(0xff9fe3cf);
+  // Best gallery "Golden Frame" palette, matching the app icon: amber gold, with sunny gold and bronze companions
+  static const defaultAccent = Color(0xffb8730a);
+  static const defaultDarkAccent = Color(0xfff2b530);
+  static const defaultSecondary = Color(0xffd99a1c);
+  static const defaultDarkSecondary = Color(0xffffd27a);
+  static const defaultTertiary = Color(0xff8a5a1e);
+  static const defaultDarkTertiary = Color(0xffe8b47a);
   static const _neutralOnDark = Colors.white;
   static const _neutralOnLight = Color(0xAA000000);
 

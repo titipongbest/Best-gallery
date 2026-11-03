@@ -56,7 +56,7 @@ class Themes {
       cardColor: _schemeCardLayer(colors),
       colorScheme: colors,
       dividerColor: colors.outlineVariant,
-      shadowColor: const Color(0xff2f4bb0),
+      shadowColor: const Color(0xff9a6410),
       scaffoldBackgroundColor: _schemeFirstLayer(colors),
       // TYPOGRAPHY & ICONOGRAPHY
       iconTheme: _iconTheme(colors),
@@ -185,16 +185,16 @@ class Themes {
 
   // light
 
-  // Best gallery "Azure Glass" palette: frosted periwinkle surfaces, deep navy text, royal blue accents
-  static const _lightInk = Color(0xff141a3a);
-  static const _lightThemeTypoBodyColor = Color(0xdd141a3a);
+  // Best gallery "Golden Frame" palette: cream surfaces, deep brown text, amber gold accents
+  static const _lightInk = Color(0xff2e2210);
+  static const _lightThemeTypoBodyColor = Color(0xdd2e2210);
   static final _lightThemeTypo = _typography.black.apply(
     bodyColor: _lightThemeTypoBodyColor,
     displayColor: _lightThemeTypoBodyColor,
   );
-  static const _lightTitleColor = Color(0xff141a3a);
+  static const _lightTitleColor = Color(0xff2e2210);
   static const _lightLabelColor = _lightThemeTypoBodyColor;
-  static const _lightActionIconColor = Color(0xff2f5bea);
+  static const _lightActionIconColor = Color(0xffb8730a);
   static const _lightOnSurface = _lightInk;
 
   static ThemeData lightTheme(Color accentColor, bool deviceInitialized, KnownLocale locale) {
@@ -206,19 +206,19 @@ class Themes {
       primary: accentColor,
       onPrimary: onAccent,
       secondary: isDefault ? AvesColorsData.defaultSecondary : accentColor,
-      onSecondary: isDefault ? Colors.white : onAccent,
+      onSecondary: isDefault ? const Color(0xff2e2210) : onAccent,
       tertiary: isDefault ? AvesColorsData.defaultTertiary : null,
       onTertiary: isDefault ? Colors.white : null,
       onSurface: _lightOnSurface,
-      onSurfaceVariant: const Color(0xff5d6890),
-      surface: const Color(0xfff2f5fc),
+      onSurfaceVariant: const Color(0xff6b5838),
+      surface: const Color(0xfffdf9f1),
       surfaceContainerLowest: const Color(0xffffffff),
-      surfaceContainerLow: const Color(0xfff7f9fe),
-      surfaceContainer: const Color(0xffeaeff9),
-      surfaceContainerHigh: const Color(0xffe2e9f7),
-      surfaceContainerHighest: const Color(0xffd8e1f4),
-      outline: const Color(0xff8a94b8),
-      outlineVariant: const Color(0xffd3dcf2),
+      surfaceContainerLow: const Color(0xfffffdf8),
+      surfaceContainer: const Color(0xfff8f0e0),
+      surfaceContainerHigh: const Color(0xfff3e8d2),
+      surfaceContainerHighest: const Color(0xffeddfc2),
+      outline: const Color(0xffa8916a),
+      outlineVariant: const Color(0xffead9b5),
     );
     final textTheme = _lightThemeTypo;
     return _baseTheme(colors, deviceInitialized).copyWith(
@@ -269,18 +269,18 @@ class Themes {
       primary: accentColor,
       onPrimary: onAccent,
       secondary: isDefault ? AvesColorsData.defaultDarkSecondary : accentColor,
-      onSecondary: isDefault ? const Color(0xff0e1330) : onAccent,
+      onSecondary: isDefault ? const Color(0xff17130c) : onAccent,
       tertiary: isDefault ? AvesColorsData.defaultDarkTertiary : null,
-      onTertiary: isDefault ? const Color(0xff0e1330) : null,
+      onTertiary: isDefault ? const Color(0xff17130c) : null,
       onSurface: _darkOnSurface,
-      // deep night navy surfaces
-      surface: const Color(0xff0e1330),
-      surfaceContainerLowest: const Color(0xff0a0e26),
-      surfaceContainerLow: const Color(0xff131a3d),
-      surfaceContainer: const Color(0xff18204a),
-      surfaceContainerHigh: const Color(0xff1f2856),
-      surfaceContainerHighest: const Color(0xff283263),
-      outlineVariant: const Color(0xff2f3a70),
+      // deep warm brown surfaces
+      surface: const Color(0xff17130c),
+      surfaceContainerLowest: const Color(0xff120f09),
+      surfaceContainerLow: const Color(0xff1d1810),
+      surfaceContainer: const Color(0xff241e14),
+      surfaceContainerHigh: const Color(0xff2d2619),
+      surfaceContainerHighest: const Color(0xff372e1f),
+      outlineVariant: const Color(0xff4a3e28),
     );
     return colors;
   }

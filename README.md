@@ -16,6 +16,8 @@ Refine by NorthXbar
 The version shown in the app (About page and navigation drawer) comes from `version` in `pubspec.yaml`,
 which must be kept in sync with `flavors/pubspec_*.yaml`. Bump it with each update.
 
+- **1.6.0**
+  - "Golden Frame" colors matching the new icon: amber gold accents on cream surfaces, warm brown dark mode, gold lock page (glass style and layout unchanged)
 - **1.5.1**
   - new app icon: golden photo frame over a stacked card, on a cream background
 - **1.5.0**

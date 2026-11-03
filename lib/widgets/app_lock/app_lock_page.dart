@@ -16,10 +16,10 @@ class _AppLockPageState extends State<AppLockPage> {
   final _controller = PinInputController();
   bool _error = false;
 
-  static const _ink = Color(0xff141a3a);
-  static const _muted = Color(0xff5d6890);
-  static const _blue = Color(0xff2f5bea);
-  static const _cellFill = Color(0xffe9eef9);
+  static const _ink = Color(0xff2e2210);
+  static const _muted = Color(0xff6b5838);
+  static const _gold = Color(0xffb8730a);
+  static const _cellFill = Color(0xfff8f0e0);
 
   @override
   void dispose() {
@@ -31,7 +31,7 @@ class _AppLockPageState extends State<AppLockPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final cellShadow = [
-      BoxShadow(color: const Color(0xff2f4bb0).withValues(alpha: .10), blurRadius: 10, offset: const Offset(3, 4)),
+      BoxShadow(color: const Color(0xff9a6410).withValues(alpha: .10), blurRadius: 10, offset: const Offset(3, 4)),
       const BoxShadow(color: Colors.white, blurRadius: 8, offset: Offset(-3, -3)),
     ];
     return Material(
@@ -40,7 +40,7 @@ class _AppLockPageState extends State<AppLockPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xfff2f5fc), Color(0xffe6ecf8), Color(0xffdfe6f6)],
+            colors: [Color(0xfffdf9f1), Color(0xfff8efdc), Color(0xfff3e6c9)],
             stops: [0, .6, 1],
           ),
         ),
@@ -69,11 +69,11 @@ class _AppLockPageState extends State<AppLockPage> {
                             gradient: const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [Color(0xfff7f9fe), Color(0xffe7edf9)],
+                              colors: [Color(0xfffffdf8), Color(0xfff6ecd8)],
                             ),
                             border: Border.all(color: Colors.white.withValues(alpha: .9)),
                             boxShadow: [
-                              BoxShadow(color: const Color(0xff2f4bb0).withValues(alpha: .16), blurRadius: 22, offset: const Offset(8, 10)),
+                              BoxShadow(color: const Color(0xff9a6410).withValues(alpha: .16), blurRadius: 22, offset: const Offset(8, 10)),
                               const BoxShadow(color: Colors.white, blurRadius: 16, offset: Offset(-6, -6)),
                             ],
                           ),
@@ -98,7 +98,7 @@ class _AppLockPageState extends State<AppLockPage> {
                         Text(
                           _error ? l10n.appLockWrongPin : l10n.pinDialogEnter,
                           style: TextStyle(
-                            color: _error ? const Color(0xffd32f2f) : const Color(0xff4a5578),
+                            color: _error ? const Color(0xffd32f2f) : const Color(0xff5a4a2e),
                             fontSize: 15,
                           ),
                         ),
@@ -118,10 +118,10 @@ class _AppLockPageState extends State<AppLockPage> {
                             focusedFillColor: _cellFill,
                             filledFillColor: _cellFill,
                             borderColor: Colors.white,
-                            focusedBorderColor: const Color(0xff7aa0ff),
+                            focusedBorderColor: const Color(0xfff2b530),
                             filledBorderColor: Colors.white,
-                            textStyle: const TextStyle(color: _blue, fontSize: 24, fontWeight: FontWeight.w700),
-                            cursorColor: _blue,
+                            textStyle: const TextStyle(color: _gold, fontSize: 24, fontWeight: FontWeight.w700),
+                            cursorColor: _gold,
                             boxShadows: cellShadow,
                             focusedBoxShadows: cellShadow,
                           ),
@@ -156,7 +156,7 @@ class _AppLockPageState extends State<AppLockPage> {
   }
 }
 
-// glossy blue shield with a keyhole
+// glossy gold shield with a keyhole
 class const ShieldLogoPainter() extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -182,7 +182,7 @@ class const ShieldLogoPainter() extends CustomPainter {
     canvas.drawPath(
       outer.shift(const Offset(0, 4)),
       Paint()
-        ..color = const Color(0x552f4bb0)
+        ..color = const Color(0x559a6410)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
     );
     // gold bezel
@@ -192,7 +192,7 @@ class const ShieldLogoPainter() extends CustomPainter {
         ..shader = ui.Gradient.linear(
           Offset.zero,
           Offset(w, h),
-          const [Color(0xffa9c4ff), Color(0xff4f8bff), Color(0xff2f5bea), Color(0xff1f3cc0)],
+          const [Color(0xffffe08a), Color(0xfff2b530), Color(0xffb8730a), Color(0xff8a5208)],
           const [0, .35, .7, 1],
         ),
     );
@@ -203,7 +203,7 @@ class const ShieldLogoPainter() extends CustomPainter {
         ..shader = ui.Gradient.linear(
           Offset(0, h * .1),
           Offset(0, h * .9),
-          const [Color(0xff6f9bff), Color(0xff2a44c9)],
+          const [Color(0xfff5c04a), Color(0xffc27a0e)],
         ),
     );
     // keyhole
@@ -211,7 +211,7 @@ class const ShieldLogoPainter() extends CustomPainter {
       ..shader = ui.Gradient.linear(
         Offset(w * .4, h * .35),
         Offset(w * .6, h * .7),
-        const [Color(0xffffffff), Color(0xffe3ebff)],
+        const [Color(0xffffffff), Color(0xfffff3d6)],
       );
     final cx = w / 2;
     canvas.drawCircle(Offset(cx, h * .42), w * .1, keyPaint);
@@ -253,11 +253,11 @@ class const _GlassOrb({required final double size}) extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: const RadialGradient(
           center: Alignment(-.3, -.4),
-          colors: [Colors.white, Color(0xffcdd9f6), Color(0xffa9bdf0)],
+          colors: [Colors.white, Color(0xfff8e2b0), Color(0xffefc56a)],
           stops: [0, .55, 1],
         ),
         boxShadow: [
-          BoxShadow(color: const Color(0xff4664dc).withValues(alpha: .15), blurRadius: 24, offset: const Offset(0, 10)),
+          BoxShadow(color: const Color(0xffc9850f).withValues(alpha: .15), blurRadius: 24, offset: const Offset(0, 10)),
         ],
       ),
     );
@@ -272,7 +272,7 @@ class const _GlassRing({required final double size}) extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xff6e8cf0).withValues(alpha: .35), width: 10),
+        border: Border.all(color: const Color(0xffe0a42a).withValues(alpha: .35), width: 10),
       ),
     );
   }
