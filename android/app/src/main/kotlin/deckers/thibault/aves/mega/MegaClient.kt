@@ -138,28 +138,39 @@ class MegaClient(
 
     private fun requestBatch(commands: JSONArray, querySid: Boolean = true): JSONArray {
         var hashcash: String? = null
+        var hashcashAttempts = 0
         var attempt = 0
+        var requestId = seq.incrementAndGet()
         while (true) {
-            val query = StringBuilder("id=${seq.incrementAndGet()}")
+            // as done by official clients, a request retried with a hashcash solution keeps its sequence number
+            if (hashcash == null && attempt > 0) requestId = seq.incrementAndGet()
+            val query = StringBuilder("id=$requestId")
             val sid = session?.sid
             if (querySid && sid != null) query.append("&sid=").append(URLEncoder.encode(sid, "UTF-8"))
             val headers = HashMap<String, String>()
             headers["Content-Type"] = "application/json"
+            headers["User-Agent"] = USER_AGENT
             hashcash?.let { headers["X-Hashcash"] = it }
             val response = http.post("${gateway}cs?$query", headers, commands.toString().toByteArray(Charsets.UTF_8))
 
             val challenge = response.headers["x-hashcash"]
-            if (challenge != null && attempt < MAX_RETRIES) {
+            if (challenge != null && hashcashAttempts < MAX_RETRIES) {
                 hashcash = MegaCrypto.solveHashcash(challenge)
-                attempt++
+                hashcashAttempts++
                 continue
             }
+            hashcash = null
             if (response.code != 200) {
                 if (response.code in 500..599 && attempt < MAX_RETRIES) {
                     backoff(attempt++)
                     continue
                 }
-                throw IOException("MEGA API HTTP status=${response.code}")
+                val details = if (response.code == 402) {
+                    " (hashcash challenge=${challenge ?: "missing"}, solved=$hashcashAttempts)"
+                } else {
+                    ""
+                }
+                throw IOException("MEGA API HTTP status=${response.code}$details")
             }
             val text = String(response.body, Charsets.UTF_8).trim()
             // a bare number is a global error (e.g. -3, -15)
@@ -478,6 +489,7 @@ class MegaClient(
     companion object {
         const val DEFAULT_GATEWAY = "https://g.api.mega.co.nz/"
         private const val MAX_RETRIES = 5
+        private const val USER_AGENT = "BestGallery/2.1"
     }
 }
 
