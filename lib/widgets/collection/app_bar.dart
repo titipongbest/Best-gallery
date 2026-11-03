@@ -19,6 +19,7 @@ import 'package:aves/widgets/aves_app.dart';
 import 'package:aves/widgets/collection/entry_set_action_delegate.dart';
 import 'package:aves/widgets/collection/filter_bar.dart';
 import 'package:aves/widgets/collection/layout_bar.dart';
+import 'package:aves/widgets/collection/memories_bar.dart';
 import 'package:aves/widgets/collection/query_bar.dart';
 import 'package:aves/widgets/common/action_controls/quick_choosers/move_button.dart';
 import 'package:aves/widgets/common/action_controls/quick_choosers/rate_button.dart';
@@ -97,6 +98,26 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
 
   bool get showFilterBar => collection.visibleFilters.isNotEmpty;
 
+  String? _memoriesKey;
+  List<Memory> _memoriesCache = const [];
+
+  // photos taken on this day in previous years, shown on the unfiltered collection only
+  List<Memory> get _memories {
+    if (collection.filters.isNotEmpty || settings.useTvLayout) return const [];
+    final entries = collection.sortedEntries;
+    final now = DateTime.now();
+    final key = '${entries.length}-${now.year}-${now.month}-${now.day}';
+    if (key != _memoriesKey) {
+      _memoriesKey = key;
+      _memoriesCache = Memory.compute(entries, now);
+    }
+    return _memoriesCache;
+  }
+
+  bool get showMemoriesBar => _memories.isNotEmpty;
+
+  bool _lastShowMemoriesBar = false;
+
   static const _trashSelectionQuickActions = <EntrySetAction>[
     .delete,
     .restore,
@@ -158,10 +179,23 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
 
   void _registerWidget(CollectionAppBar widget) {
     widget.collection.filterChangeNotifier.addListener(_onFilterChanged);
+    widget.collection.addListener(_onCollectionChanged);
   }
 
   void _unregisterWidget(CollectionAppBar widget) {
     widget.collection.filterChangeNotifier.removeListener(_onFilterChanged);
+    widget.collection.removeListener(_onCollectionChanged);
+  }
+
+  void _onCollectionChanged() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final show = showMemoriesBar;
+      if (show != _lastShowMemoriesBar) {
+        setState(() {});
+        _updateAppBarHeight();
+      }
+    });
   }
 
   @override
@@ -213,6 +247,11 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
                         actions: (context, maxWidth) => useTvLayout ? [] : _buildActions(context, selection, maxWidth),
                         bottom: Column(
                           children: [
+                            if (showMemoriesBar)
+                              MemoriesBar(
+                                collection: collection,
+                                memories: _memories,
+                              ),
                             if (useTvLayout)
                               SizedBox(
                                 height: CaptionedButton.getTelevisionButtonHeight(context),
@@ -277,6 +316,10 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
   double _getAppBarContentHeight(BuildContext context) {
     final textScaler = MediaQuery.textScalerOf(context);
     double height = textScaler.scale(kToolbarHeight);
+    _lastShowMemoriesBar = showMemoriesBar;
+    if (_lastShowMemoriesBar) {
+      height += MemoriesBar.preferredHeight;
+    }
     if (settings.useTvLayout) {
       height += CaptionedButton.getTelevisionButtonHeight(context);
     }

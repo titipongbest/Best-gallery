@@ -16,6 +16,11 @@ Refine by NorthXbar
 The version shown in the app (About page and navigation drawer) comes from `version` in `pubspec.yaml`,
 which must be kept in sync with `flavors/pubspec_*.yaml`. Bump it with each update.
 
+- **2.0.0**
+  - redesigned lock page with the app's own keypad, deep PIN cells and fingerprint unlock
+  - pill navigation bar with Home, Albums, Search and Favorites
+  - "On this day" memories carousel at the top of the photos page
+  - quick access tiles above the albums: favorites, videos, recently added and bin
 - **1.6.0**
   - "Golden Frame" colors matching the new icon: amber gold accents on cream surfaces, warm brown dark mode, gold lock page (glass style and layout unchanged)
 - **1.5.1**

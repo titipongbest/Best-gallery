@@ -46,6 +46,8 @@ class FilterGridAppBar<T extends CollectionFilter, CSAD extends ChipSetActionDel
   final ValueNotifier<double> appBarHeightNotifier;
   final ScrollController scrollController;
   final void Function(BuildContext context, T filter)? onGroupCrumbTap;
+  final Widget? header;
+  final double headerHeight;
 
   const new({
     super.key,
@@ -56,6 +58,8 @@ class FilterGridAppBar<T extends CollectionFilter, CSAD extends ChipSetActionDel
     required this.appBarHeightNotifier,
     required this.scrollController,
     required this.onGroupCrumbTap,
+    this.header,
+    this.headerHeight = 0,
   });
 
   @override
@@ -181,6 +185,7 @@ class _FilterGridAppBarState<T extends CollectionFilter, CSAD extends ChipSetAct
             actions: (context, maxWidth) => useTvLayout ? [] : actionsBuilder(context, appMode, selection, actionDelegate),
             bottom: Column(
               children: [
+                ?widget.header,
                 if (useTvLayout)
                   SizedBox(
                     height: CaptionedButton.getTelevisionButtonHeight(context),
@@ -242,9 +247,12 @@ class _FilterGridAppBarState<T extends CollectionFilter, CSAD extends ChipSetAct
 
   static bool _showQueryLine(BuildContext context) => context.read<Query?>()?.enabled ?? false;
 
-  static double _getAppBarContentHeight(BuildContext context) {
+  double _getAppBarContentHeight(BuildContext context) {
     final textScaler = MediaQuery.textScalerOf(context);
     double height = textScaler.scale(kToolbarHeight);
+    if (widget.header != null) {
+      height += widget.headerHeight;
+    }
     if (settings.useTvLayout) {
       height += CaptionedButton.getTelevisionButtonHeight(context);
     }
