@@ -16,6 +16,9 @@ object CrashLog {
     private const val MAX_FILE_LENGTH = 256 * 1024L
     private const val MAX_TRACE_LENGTH = 6 * 1024
     private const val MAX_EXIT_REASONS = 12
+    private const val MAX_MAIN_STACK_LINES = 80
+    private const val MAX_OTHER_THREADS = 8
+    private const val MAX_OTHER_STACK_LINES = 25
 
     @Volatile
     private var installed = false
@@ -91,9 +94,7 @@ object CrashLog {
             if (info.reason == ApplicationExitInfo.REASON_ANR) {
                 try {
                     info.traceInputStream?.use { input ->
-                        val bytes = ByteArray(MAX_TRACE_LENGTH)
-                        val count = input.read(bytes)
-                        if (count > 0) sb.append(String(bytes, 0, count)).append("\n")
+                        sb.append(extractAnrTrace(input.bufferedReader().readText())).append("\n")
                     }
                 } catch (_: Exception) {
                     // trace unavailable
@@ -102,6 +103,34 @@ object CrashLog {
             sb.append("\n")
         }
         sb.append("\n")
+        return sb.toString()
+    }
+
+    // keeps the stack of the main thread, which tells what blocked the app,
+    // and the beginning of the other app threads
+    private fun extractAnrTrace(trace: String): String {
+        val lines = trace.lines()
+        val sb = StringBuilder()
+        val mainStart = lines.indexOfFirst { it.startsWith("\"main\"") }
+        if (mainStart >= 0) {
+            sb.append("--- main thread ---\n")
+            lines.drop(mainStart).takeWhile { it.isNotBlank() }.take(MAX_MAIN_STACK_LINES).forEach { sb.append(it).append("\n") }
+        } else {
+            sb.append(trace.take(MAX_TRACE_LENGTH)).append("\n")
+        }
+        // app threads that are blocked or running our code
+        val threadStarts = lines.indices.filter { lines[it].startsWith("\"") && it != mainStart }
+        var others = 0
+        for (start in threadStarts) {
+            if (others >= MAX_OTHER_THREADS) break
+            val block = lines.drop(start).takeWhile { it.isNotBlank() }
+            val relevant = block.any { it.contains("deckers.thibault") } || block.firstOrNull()?.contains("Blocked") == true
+            if (!relevant) continue
+            others++
+            sb.append("--- ${block.first()} ---\n")
+            block.drop(1).filter { it.trimStart().startsWith("at ") || it.contains("waiting") || it.contains("locked") || it.contains("state=") }
+                .take(MAX_OTHER_STACK_LINES).forEach { sb.append(it).append("\n") }
+        }
         return sb.toString()
     }
 
