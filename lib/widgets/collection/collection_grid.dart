@@ -73,8 +73,8 @@ class const CollectionGrid({
   static double spacingForLayout(TileLayout layout) {
     switch (layout) {
       case .mosaic:
+        return 4;
       case .grid:
-        return 6;
       case .list:
       case .calendar:
         return 2;
@@ -117,7 +117,7 @@ class _CollectionGridState extends State<CollectionGrid> {
         extentMin: CollectionGrid.extentMin,
         extentMax: CollectionGrid.extentMax,
         spacing: spacing,
-        horizontalPadding: 10,
+        horizontalPadding: 2,
       );
     }
 

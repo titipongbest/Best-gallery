@@ -16,6 +16,8 @@ Refine by NorthXbar
 The version shown in the app (About page and navigation drawer) comes from `version` in `pubspec.yaml`,
 which must be kept in sync with `flavors/pubspec_*.yaml`. Bump it with each update.
 
+- **2.0.2**
+  - photo grid back to square tiles with the original tight spacing
 - **2.0.1**
   - icon-only navigation bar, devices on the previous default bar move to the new one
   - rounded photo tiles with wider spacing, bold titles
