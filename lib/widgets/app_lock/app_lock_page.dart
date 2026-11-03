@@ -84,9 +84,11 @@ class _AppLockPageState extends State<AppLockPage> {
                           height: 120,
                           alignment: Alignment.center,
                           decoration: _raisedDecoration(radius: 36),
-                          child: const CustomPaint(
-                            size: Size(64, 76),
-                            painter: ShieldLogoPainter(),
+                          child: Image.asset(
+                            'assets/best_gallery_symbol.png',
+                            width: 84,
+                            height: 84,
+                            filterQuality: FilterQuality.medium,
                           ),
                         ),
                         const SizedBox(height: 22),

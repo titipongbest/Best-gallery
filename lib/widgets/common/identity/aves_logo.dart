@@ -17,14 +17,13 @@ class const AvesLogo({
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    Widget child = ClipOval(
-      child: Image.asset(
-        'assets/best_gallery_icon.png',
-        width: size * .9,
-        height: size * .9,
-        fit: BoxFit.cover,
-        filterQuality: FilterQuality.medium,
-      ),
+    // the symbol alone, as the name is unreadable at small sizes
+    Widget child = Image.asset(
+      'assets/best_gallery_symbol.png',
+      width: size * .68,
+      height: size * .68,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.medium,
     );
     if (context.select<Settings, bool>((v) => v.themeColorMode == AvesThemeColorMode.monochrome)) {
       final tint = Color.lerp(theme.colorScheme.primary, Colors.white, .5)!;
