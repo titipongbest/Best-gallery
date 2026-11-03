@@ -22,7 +22,9 @@ class MegaSource extends CollectionSource {
 
   new({required this.folderHandle, required this.folderName});
 
-  static const _detailConcurrency = 3;
+  static const _detailConcurrency = 4;
+  static const _batchSize = 12;
+  static const _batchDelay = Duration(milliseconds: 800);
 
   @override
   set canAnalyze(bool enabled) {}
@@ -62,26 +64,39 @@ class MegaSource extends CollectionSource {
       final entries = listing.files.map((map) {
         final fields = Map.of(map);
         fields[EntryFields.origin] = EntryOrigins.mega;
+        // entries are kept by ID in the source, so each one needs its own
+        fields[EntryFields.id] = localMediaDb.nextId;
         return AvesEntry.fromMap(fields);
       }).toSet();
       clearEntries();
-      addEntries(entries);
-      updateDerivedFilters(entries);
-      state = SourceState.ready;
-      unawaited(_fetchDetails(entries));
+      updateDerivedFilters();
+      // entries are added once sized, as the viewer needs dimensions
+      await _fetchDetails(entries);
+      if (!_disposed) state = SourceState.ready;
     } catch (error) {
       debugPrint('$runtimeType failed to load folder=$folderHandle with error=$error');
-      state = SourceState.ready;
+      if (!_disposed) state = SourceState.ready;
       rethrow;
     }
   }
 
-  // completes entries with dimensions, orientation and dates
+  // completes entries with dimensions, orientation and dates, then adds them to the source by batches
   Future<void> _fetchDetails(Set<AvesEntry> entries) async {
     final todo = entries.toList();
     final total = todo.length;
+    final pending = <AvesEntry>{};
     var done = 0;
+    var lastFlush = DateTime.now();
     setProgress(done: done, total: total);
+
+    void flush() {
+      if (pending.isEmpty || _disposed) return;
+      final batch = Set.of(pending);
+      pending.clear();
+      addEntries(batch);
+      updateDerivedFilters(batch);
+      lastFlush = DateTime.now();
+    }
 
     Future<void> worker() async {
       while (todo.isNotEmpty && !_disposed) {
@@ -100,15 +115,16 @@ class MegaSource extends CollectionSource {
         } catch (error) {
           debugPrint('$runtimeType failed to get details for uri=${entry.uri} with error=$error');
         }
+        if (_disposed) return;
+        pending.add(entry);
         done++;
-        if (!_disposed) setProgress(done: done, total: total);
+        setProgress(done: done, total: total);
+        if (pending.length >= _batchSize || DateTime.now().difference(lastFlush) > _batchDelay) flush();
       }
     }
 
     await Future.wait(List.generate(_detailConcurrency, (_) => worker()));
-    if (_disposed) return;
-    invalidateEntries();
-    updateDerivedFilters(entries);
+    flush();
   }
 
   @override
