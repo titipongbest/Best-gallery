@@ -615,7 +615,7 @@ abstract class ImageProvider {
         }
     }
 
-    suspend fun renameMultiple(
+    open suspend fun renameMultiple(
         context: Context,
         entriesToNewName: Map<AvesEntry, String>,
         isCancelledOp: CancelCheck,

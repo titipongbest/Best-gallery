@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "claude/rebrand-best-gallery" ]
   workflow_dispatch:
 
 # Declare default permissions as read only.

@@ -56,6 +56,7 @@ import 'package:aves/widgets/map/map_page.dart';
 import 'package:aves/widgets/search/collection_search_page_route.dart';
 import 'package:aves/widgets/stats/stats_page.dart';
 import 'package:aves/widgets/viewer/slideshow_page.dart';
+import 'package:aves/model/source/mega_source.dart';
 import 'package:aves_map/aves_map.dart';
 import 'package:aves_model/aves_model.dart';
 import 'package:aves_utils/aves_utils.dart';
@@ -68,6 +69,20 @@ import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 class EntrySetActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAwareMixin, EntryEditorMixin, EntryStorageMixin, VaultAwareMixin {
+  // actions supported by MEGA entries, which are remote and stored outside the local media database
+  static const _megaActions = {
+    EntrySetAction.changeLayout,
+    EntrySetAction.select,
+    EntrySetAction.selectAll,
+    EntrySetAction.selectNone,
+    EntrySetAction.toggleLayoutBar,
+    EntrySetAction.toggleTitleSearch,
+    EntrySetAction.slideshow,
+    EntrySetAction.rename,
+  };
+
+  static bool isAllowedFor(EntrySetAction action, CollectionSource source) => source is! MegaSource || _megaActions.contains(action);
+
   bool isVisible(
     EntrySetAction action, {
     required AppMode appMode,
@@ -149,6 +164,8 @@ class EntrySetActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAware
     required CollectionLens collection,
     required int selectedItemCount,
   }) {
+    if (!isAllowedFor(action, collection.source)) return false;
+
     final itemCount = collection.entryCount;
     final hasItems = itemCount > 0;
     final hasSelection = selectedItemCount > 0;
@@ -426,7 +443,9 @@ class EntrySetActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAware
       return MapEntry(entry, '$newName${entry.extension}');
     });
     final entriesToNewName = Map.fromEntries(await Future.wait(namingFutures)).whereNotNullValue();
-    await rename(context, entriesToNewName: entriesToNewName, persist: true);
+    // MEGA entries are not stored in the local media database
+    final persist = !entries.any((entry) => entry.isMegaContent);
+    await rename(context, entriesToNewName: entriesToNewName, persist: persist);
   }
 
   Future<void> _convert(BuildContext context) async {

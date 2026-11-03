@@ -993,5 +993,24 @@
     "settingsVideoEnablePip": "Picture-in-picture (ภาพซ้อนภาพ)",
     "tileLayoutCalendar": "ปฏิทิน",
     "collectionActionShowLayoutBar": "แสดงแถบเลย์เอาต์",
-    "collectionActionHideLayoutBar": "ซ่อนแถบเลย์เอาต์"
+    "collectionActionHideLayoutBar": "ซ่อนแถบเลย์เอาต์",
+
+    "megaPageTitle": "MEGA",
+    "megaLoginTitle": "เข้าสู่ระบบ MEGA",
+    "megaLoginDescription": "ดูและเปลี่ยนชื่อรูปที่เก็บใน MEGA ได้จากแอปนี้ รหัสผ่านใช้แค่ตอนเข้าสู่ระบบ เครื่องนี้จะเก็บไว้เฉพาะ session เท่านั้น",
+    "megaEmailLabel": "อีเมล",
+    "megaPasswordLabel": "รหัสผ่าน",
+    "megaMfaLabel": "รหัสยืนยันตัวตน 2 ขั้นตอน",
+    "megaLoginButton": "เข้าสู่ระบบ",
+    "megaLogoutTooltip": "ออกจากระบบ",
+    "megaRefreshTooltip": "รีเฟรช",
+    "megaErrorWrongCredentials": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+    "megaErrorMfaRequired": "ใส่รหัส 6 หลักจากแอปยืนยันตัวตน",
+    "megaErrorQuota": "โควตาการโหลดของ MEGA เต็ม ลองใหม่ภายหลัง",
+    "megaErrorSessionExpired": "session ของ MEGA หมดอายุ กรุณาเข้าสู่ระบบใหม่",
+    "megaErrorGeneric": "เชื่อมต่อ MEGA ไม่ได้: {message}",
+    "megaSignedInAs": "เข้าสู่ระบบเป็น {email}",
+    "megaFolderMediaTile": "{count, plural, other{รูปและวิดีโอ {count} รายการ}}",
+    "megaFolderSubtitle": "{folderCount} โฟลเดอร์, {mediaCount} รูป/วิดีโอ",
+    "megaFolderEmpty": "ไม่มีรูป วิดีโอ หรือโฟลเดอร์ที่นี่"
 }

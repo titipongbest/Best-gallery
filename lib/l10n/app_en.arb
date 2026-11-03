@@ -1156,5 +1156,58 @@
   "panoramaEnableSensorControl": "Enable sensor control",
   "panoramaDisableSensorControl": "Disable sensor control",
 
-  "sourceViewerPageTitle": "Source"
+  "sourceViewerPageTitle": "Source",
+
+  "megaPageTitle": "MEGA",
+  "megaLoginTitle": "Sign in to MEGA",
+  "megaLoginDescription": "Browse and rename the photos stored in your MEGA cloud drive. Your password is only used to sign in, and only the session is kept on this device.",
+  "megaEmailLabel": "Email",
+  "megaPasswordLabel": "Password",
+  "megaMfaLabel": "Two-factor authentication code",
+  "megaLoginButton": "Sign in",
+  "megaLogoutTooltip": "Sign out",
+  "megaRefreshTooltip": "Refresh",
+  "megaErrorWrongCredentials": "Wrong email or password",
+  "megaErrorMfaRequired": "Enter the 6-digit code from your authenticator app",
+  "megaErrorQuota": "MEGA transfer quota exceeded, try again later",
+  "megaErrorSessionExpired": "Your MEGA session expired, please sign in again",
+  "megaErrorGeneric": "Could not reach MEGA: {message}",
+  "@megaErrorGeneric": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "megaSignedInAs": "Signed in as {email}",
+  "@megaSignedInAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "megaFolderMediaTile": "{count, plural, =1{1 photo or video} other{{count} photos and videos}}",
+  "@megaFolderMediaTile": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "megaFolderSubtitle": "{folderCount} folders, {mediaCount} media",
+  "@megaFolderSubtitle": {
+    "placeholders": {
+      "folderCount": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "mediaCount": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "megaFolderEmpty": "No photos, videos or folders here"
 }

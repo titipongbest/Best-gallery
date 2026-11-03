@@ -326,6 +326,13 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
+        <!-- serves decrypted MEGA cloud files to the app itself -->
+        <provider
+            android:name=".mega.MegaContentProvider"
+            android:authorities="${applicationId}.mega"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
         <provider
             android:name=".SearchSuggestionsProvider"
             android:authorities="@string/search_provider"

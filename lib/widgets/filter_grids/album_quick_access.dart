@@ -5,7 +5,10 @@ import 'package:aves/model/filters/recent.dart';
 import 'package:aves/model/filters/trash.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/model/source/collection_source.dart';
+import 'package:aves/theme/icons.dart';
 import 'package:aves/widgets/collection/collection_page.dart';
+import 'package:aves/widgets/common/extensions/build_context.dart';
+import 'package:aves/widgets/mega/mega_page.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
@@ -31,20 +34,48 @@ class const AlbumQuickAccessBar({
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: _verticalPadding),
         child: Row(
-          children: filters
-              .map(
-                (filter) => Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: _QuickTile(
-                      filter: filter,
-                      count: _count(filter),
-                      height: _tileHeight,
+          children:
+              [
+                    ...filters.map(
+                      (filter) => _QuickTile(
+                        icon: filter.iconBuilder(context, 20),
+                        label: filter.getLabel(context),
+                        value: '${_count(filter)}',
+                        height: _tileHeight,
+                        onTap: () => Navigator.maybeOf(context)?.push(
+                          MaterialPageRoute(
+                            settings: const RouteSettings(name: CollectionPage.routeName),
+                            builder: (context) => CollectionPage(
+                              source: context.read<CollectionSource>(),
+                              filters: {filter},
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              )
-              .toList(),
+                    // MEGA cloud drive
+                    _QuickTile(
+                      icon: const Icon(AIcons.cloud, size: 20),
+                      label: context.l10n.megaPageTitle,
+                      value: null,
+                      height: _tileHeight,
+                      onTap: () => Navigator.maybeOf(context)?.push(
+                        MaterialPageRoute(
+                          settings: const RouteSettings(name: MegaPage.routeName),
+                          builder: (context) => const MegaPage(),
+                        ),
+                      ),
+                    ),
+                  ]
+                  .map(
+                    (tile) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: tile,
+                      ),
+                    ),
+                  )
+                  .toList(),
         ),
       ),
     );
@@ -57,9 +88,11 @@ class const AlbumQuickAccessBar({
 }
 
 class const _QuickTile({
-  required final CollectionFilter filter,
-  required final int count,
+  required final Widget? icon,
+  required final String label,
+  required final String? value,
   required final double height,
+  required final VoidCallback onTap,
 }) extends StatelessWidget {
   static const _radius = BorderRadius.all(Radius.circular(18));
 
@@ -68,7 +101,6 @@ class const _QuickTile({
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final label = filter.getLabel(context);
     return Container(
       height: height,
       decoration: BoxDecoration(
@@ -87,15 +119,7 @@ class const _QuickTile({
         type: MaterialType.transparency,
         child: InkWell(
           borderRadius: _radius,
-          onTap: () => Navigator.maybeOf(context)?.push(
-            MaterialPageRoute(
-              settings: const RouteSettings(name: CollectionPage.routeName),
-              builder: (context) => CollectionPage(
-                source: context.read<CollectionSource>(),
-                filters: {filter},
-              ),
-            ),
-          ),
+          onTap: onTap,
           child: Tooltip(
             message: label,
             child: Column(
@@ -103,7 +127,7 @@ class const _QuickTile({
               children: [
                 IconTheme.merge(
                   data: IconThemeData(color: colors.primary),
-                  child: filter.iconBuilder(context, 20) ?? const SizedBox(height: 20),
+                  child: icon ?? const SizedBox(height: 20),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -113,7 +137,7 @@ class const _QuickTile({
                   style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant),
                 ),
                 Text(
-                  '$count',
+                  value ?? '',
                   maxLines: 1,
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colors.onSurface),
                 ),

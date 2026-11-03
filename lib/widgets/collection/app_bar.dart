@@ -417,14 +417,16 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
     final isSelecting = selection.isSelecting;
     final selectedItemCount = selection.selectedItemCount;
 
-    bool isVisible(EntrySetAction action) => _actionDelegate.isVisible(
-      action,
-      appMode: appMode,
-      isSelecting: isSelecting,
-      itemCount: collection.entryCount,
-      selectedItemCount: selectedItemCount,
-      isTrash: isTrash,
-    );
+    bool isVisible(EntrySetAction action) =>
+        EntrySetActionDelegate.isAllowedFor(action, collection.source) &&
+        _actionDelegate.isVisible(
+          action,
+          appMode: appMode,
+          isSelecting: isSelecting,
+          itemCount: collection.entryCount,
+          selectedItemCount: selectedItemCount,
+          isTrash: isTrash,
+        );
     bool canApply(EntrySetAction action) => _actionDelegate.canApply(
       action,
       isSelecting: isSelecting,
