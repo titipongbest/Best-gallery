@@ -8,7 +8,15 @@ import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:material_ui/material_ui.dart';
 
-class const AppLockPage({super.key}) extends StatefulWidget {
+class const AppLockPage({
+  super.key,
+  // defaults to the app lock
+  final bool Function(String pin)? unlock,
+  final VoidCallback? onSystemAuth,
+  // shows a close button when provided
+  final VoidCallback? onCancel,
+  final String? title,
+}) extends StatefulWidget {
   @override
   State<AppLockPage> createState() => _AppLockPageState();
 }
@@ -82,10 +90,10 @@ class _AppLockPageState extends State<AppLockPage> {
                           ),
                         ),
                         const SizedBox(height: 22),
-                        const Text(
-                          'Best gallery',
+                        Text(
+                          widget.title ?? 'Best gallery',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: _ink, fontSize: 28, fontWeight: FontWeight.w700),
+                          style: const TextStyle(color: _ink, fontSize: 28, fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 6),
                         const Text(
@@ -120,6 +128,17 @@ class _AppLockPageState extends State<AppLockPage> {
                 ),
               ),
             ),
+            if (widget.onCancel != null)
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: _keyInk),
+                    tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                    onPressed: widget.onCancel,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -261,14 +280,14 @@ class _AppLockPageState extends State<AppLockPage> {
       final confirmed = await LocalAuthentication().authenticate(
         localizedReason: 'Best gallery',
       );
-      if (confirmed) appLock.unlockWithSystemAuth();
+      if (confirmed) (widget.onSystemAuth ?? appLock.unlockWithSystemAuth)();
     } on PlatformException catch (_) {
       // authentication cancelled or not available, keep the keypad
     }
   }
 
   void _submit(String pin) {
-    if (appLock.unlock(pin)) return;
+    if ((widget.unlock ?? appLock.unlock)(pin)) return;
     unawaited(HapticFeedback.heavyImpact());
     setState(() {
       _pin = '';

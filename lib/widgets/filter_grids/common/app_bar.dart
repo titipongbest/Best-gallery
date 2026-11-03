@@ -177,6 +177,8 @@ class _FilterGridAppBarState<T extends CollectionFilter, CSAD extends ChipSetAct
           return AvesAppBar(
             contentHeight: _getAppBarContentHeight(context),
             pinned: context.select<Selection<FilterGridItem<T>>, bool>((selection) => selection.isSelecting),
+            // keep the quick access tiles at the top, instead of covering the grid on every scroll up
+            floating: widget.header == null,
             leading: _buildAppBarLeading(
               hasDrawer: appMode.canNavigate,
               isSelecting: isSelecting,

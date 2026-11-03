@@ -15,6 +15,8 @@ class const AvesAppBar({
   super.key,
   required final double contentHeight,
   required final bool pinned,
+  // when false, the bar scrolls away with the content and only shows again at the top
+  final bool floating = true,
   required final Widget? leading,
   required final Widget title,
   required final List<Widget> Function(BuildContext context, double maxWidth) actions,
@@ -77,7 +79,7 @@ class const AvesAppBar({
     }
 
     return SliverPersistentHeader(
-      floating: !useTvLayout,
+      floating: floating && !useTvLayout,
       pinned: pinned,
       delegate: _SliverAppBarDelegate(
         height: MediaQuery.paddingOf(context).top + appBarHeightForContentHeight(contentHeight),

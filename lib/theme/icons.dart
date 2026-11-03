@@ -123,6 +123,7 @@ class AIcons {
   static const convert = Symbols.transform;
   static const convertToStillImage = MdiIcons.movieRemoveOutline;
   static const copy = Symbols.file_copy;
+  static const save = Symbols.save;
   static const debug = Symbols.mode_heat;
   static const delete = Symbols.delete;
   static const edit = Symbols.edit;

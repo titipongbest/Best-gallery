@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:aves/model/app_lock.dart';
+import 'package:aves/model/mega_lock.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/model/source/collection_source.dart';
 import 'package:aves/model/vaults/vaults.dart';
@@ -41,6 +42,7 @@ class PrivacySection extends SettingsSection {
   Future<List<SettingsTile>> tiles(BuildContext context) async {
     return [
       SettingsTilePrivacyAppLock(),
+      SettingsTilePrivacyMegaLock(),
       SettingsTilePermissions(),
       SettingsTilePrivacyHiddenItems(),
       if (!settings.useTvLayout) SettingsTilePrivacyStorageAccess(),
@@ -223,6 +225,55 @@ class SettingsTilePrivacyAppLock extends SettingsTile {
       if (pin == null) return;
       if (appLock.check(pin)) {
         await appLock.setPin(null);
+      } else if (context.mounted) {
+        await showWarningDialog(
+          context: context,
+          message: context.l10n.appLockWrongPin,
+        );
+      }
+    }
+  }
+}
+
+// Best gallery: PIN asked when opening the MEGA pages
+class SettingsTilePrivacyMegaLock extends SettingsTile {
+  @override
+  List<String> get settingKeys => [];
+
+  @override
+  String title(BuildContext context) => context.l10n.megaLockSettingTitle;
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<bool>(
+    valueListenable: megaLock.enabled,
+    builder: (context, enabled, child) => SwitchListTile(
+      value: enabled,
+      onChanged: (v) => _toggle(context, v),
+      title: Text(title(context)),
+      subtitle: Text(context.l10n.megaLockSettingSubtitle),
+    ),
+  );
+
+  Future<void> _toggle(BuildContext context, bool enable) async {
+    if (enable) {
+      final pin = await showAvesDialog<String>(
+        context: context,
+        builder: (context) => const PinDialog(needConfirmation: true),
+        routeSettings: const RouteSettings(name: PinDialog.routeName),
+      );
+      if (pin != null) {
+        await megaLock.setPin(pin);
+      }
+    } else {
+      // ask for the current PIN before removing the lock
+      final pin = await showAvesDialog<String>(
+        context: context,
+        builder: (context) => const PinDialog(needConfirmation: false),
+        routeSettings: const RouteSettings(name: PinDialog.routeName),
+      );
+      if (pin == null) return;
+      if (megaLock.check(pin)) {
+        await megaLock.setPin(null);
       } else if (context.mounted) {
         await showWarningDialog(
           context: context,

@@ -242,6 +242,8 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
                       return AvesAppBar(
                         contentHeight: _getAppBarContentHeight(context),
                         pinned: context.select<Selection<AvesEntry>, bool>((selection) => selection.isSelecting),
+                        // keep the memories and quick filters at the top, instead of covering the grid on every scroll up
+                        floating: !showMemoriesBar && !showQuickFilterBar,
                         leading: _buildAppBarLeading(
                           hasDrawer: appMode.canNavigate,
                           isSelecting: isSelecting,

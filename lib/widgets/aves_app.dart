@@ -8,6 +8,8 @@ import 'package:aves/l10n/l10n.dart';
 import 'package:aves/model/app/intent.dart';
 import 'package:aves/model/app_inventory.dart';
 import 'package:aves/model/app_lock.dart';
+import 'package:aves/model/mega_lock.dart';
+import 'package:aves/services/crash_log_service.dart';
 import 'package:aves/model/device.dart';
 import 'package:aves/model/filters/recent.dart';
 import 'package:aves/model/settings/defaults.dart';
@@ -28,6 +30,7 @@ import 'package:aves/theme/text.dart';
 import 'package:aves/theme/themes.dart';
 import 'package:aves/widgets/about/app_ref.dart';
 import 'package:aves/widgets/app_lock/app_lock_gate.dart';
+import 'package:aves/widgets/app_lock/mega_lock_gate.dart';
 import 'package:aves/widgets/collection/collection_grid.dart';
 import 'package:aves/widgets/collection/collection_page.dart';
 import 'package:aves/widgets/common/action_mixins/feedback.dart';
@@ -313,10 +316,12 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
                                 },
                                 navigatorObservers: _navigatorObservers,
                                 builder: (context, child) => AppLockGate(
-                                  child: AvesAppContentDecorator(
-                                    initialized: initialized,
-                                    source: _mediaStoreSource,
-                                    child: child,
+                                  child: MegaLockGate(
+                                    child: AvesAppContentDecorator(
+                                      initialized: initialized,
+                                      source: _mediaStoreSource,
+                                      child: child,
+                                    ),
                                   ),
                                 ),
                                 onGenerateTitle: (context) => context.l10n.appName,
@@ -382,8 +387,10 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
       case .hidden:
       case .paused:
         appLock.onBackground();
+        megaLock.onBackground();
       case .resumed:
         appLock.onForeground();
+        megaLock.onForeground();
         availability.onResume();
         RecentlyAddedFilter.updateNow();
         _mediaStoreSource.checkForChanges();
@@ -451,6 +458,7 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
 
     // Best gallery: load the app lock state before showing any content
     await appLock.init();
+    await megaLock.init();
     await device.init();
     await mobileServices.init();
     await settings.init(monitorPlatformSettings: true, shouldSanitize: true);
@@ -534,7 +542,15 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
         );
     await reportService.setCollectionEnabled(settings.isErrorReportingAllowed);
 
-    FlutterError.onError = reportService.recordFlutterError;
+    FlutterError.onError = (details) {
+      unawaited(crashLogService.record('Flutter error', details.exception, details.stack));
+      reportService.recordFlutterError(details);
+    };
+    final previousOnError = PlatformDispatcher.instance.onError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      unawaited(crashLogService.record('Uncaught error', error, stack));
+      return previousOnError?.call(error, stack) ?? false;
+    };
     final now = DateTime.now();
     await reportService.setCustomKeys({
       'build_mode': kReleaseMode

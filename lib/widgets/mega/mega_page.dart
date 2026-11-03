@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aves/model/mega_lock.dart';
 import 'package:aves/model/source/collection_source.dart';
 import 'package:aves/model/source/mega_source.dart';
 import 'package:aves/services/mega_service.dart';
@@ -27,6 +28,25 @@ class _MegaPageState extends State<MegaPage> {
   void initState() {
     super.initState();
     _accountLoader = megaService.getAccountEmail();
+    megaLock.onPageOpened();
+    // leaving the lock page goes back to the page that opened MEGA
+    megaLock.onCancel = () {
+      final route = ModalRoute.of(context);
+      final navigator = Navigator.maybeOf(context);
+      if (route == null || navigator == null) return;
+      if (route.isCurrent) {
+        navigator.pop();
+      } else {
+        navigator.popUntil((r) => r == route);
+        navigator.pop();
+      }
+    };
+  }
+
+  @override
+  void dispose() {
+    megaLock.onPageClosed();
+    super.dispose();
   }
 
   void _reloadAccount() => setState(() => _accountLoader = megaService.getAccountEmail());
