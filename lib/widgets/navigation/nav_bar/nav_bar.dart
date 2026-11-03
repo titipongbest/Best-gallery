@@ -20,12 +20,15 @@ class const AppBottomNavBar({
   // collection loaded in the `CollectionPage`, if any
   final CollectionLens? currentCollection,
 }) extends StatefulWidget {
+  // taller than the default bottom bar, to fit the selected label under its pill indicator
+  static const barHeight = 66.0;
+
   static EdgeInsets getMargin(double safeBottomPadding) {
     return EdgeInsets.only(left: 8, top: 8, right: 8, bottom: max(8, safeBottomPadding + 4));
   }
 
   static double getHeightWithMargin(double safeBottomPadding) {
-    return kBottomNavigationBarHeight + getMargin(safeBottomPadding).vertical;
+    return barHeight + getMargin(safeBottomPadding).vertical;
   }
 
   @override
@@ -81,21 +84,21 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
           removeBottom: true,
           child: AvesFloatingBar(
             margin: AppBottomNavBar.getMargin(safeBottomPadding),
-            builder: (context, backgroundColor, child) => BottomNavigationBar(
-              items: items.map((item) {
+            builder: (context, backgroundColor, child) => NavigationBar(
+              destinations: items.map((item) {
                 final label = item.getText(context);
-                return BottomNavigationBarItem(
+                return NavigationDestination(
                   icon: item.getIcon(context),
                   label: label,
                   tooltip: label,
                 );
               }).toList(),
-              onTap: (index) => _goTo(context, items, index),
-              currentIndex: _getCurrentIndex(context, items),
-              type: BottomNavigationBarType.fixed,
+              onDestinationSelected: (index) => _goTo(context, items, index),
+              selectedIndex: _getCurrentIndex(context, items),
               backgroundColor: backgroundColor,
-              showSelectedLabels: false,
-              showUnselectedLabels: false,
+              elevation: 0,
+              height: AppBottomNavBar.barHeight,
+              labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
             ),
           ),
         ),

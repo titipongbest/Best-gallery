@@ -74,6 +74,17 @@ class Themes {
       outlinedButtonTheme: OutlinedButtonThemeData(style: OutlinedButton.styleFrom(shape: const StadiumBorder())),
       drawerTheme: _drawerTheme(colors),
       floatingActionButtonTheme: _floatingActionButtonTheme(colors),
+      navigationBarTheme: NavigationBarThemeData(
+        indicatorColor: colors.secondary,
+        indicatorShape: const StadiumBorder(),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return _iconTheme(colors).copyWith(color: selected ? colors.onSecondary : _unselectedWidgetColor(colors));
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          return TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.primary);
+        }),
+      ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: _schemeFirstLayer(colors),
         selectedIconTheme: IconThemeData(color: colors.primary),

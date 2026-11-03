@@ -34,6 +34,11 @@ class AppLock {
     return true;
   }
 
+  // unlock after a successful fingerprint / device credential check
+  void unlockWithSystemAuth() {
+    if (enabled.value) locked.value = false;
+  }
+
   // set a PIN to enable the lock, or `null` to disable it
   Future<bool> setPin(String? pin) async {
     final value = pin?.isNotEmpty == true ? pin : null;

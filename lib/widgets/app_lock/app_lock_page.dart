@@ -2,10 +2,11 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:aves/model/app_lock.dart';
+import 'package:aves/services/common/services.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:flutter/services.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:pin_code_fields/pin_code_fields.dart';
 
 class const AppLockPage({super.key}) extends StatefulWidget {
   @override
@@ -13,27 +14,37 @@ class const AppLockPage({super.key}) extends StatefulWidget {
 }
 
 class _AppLockPageState extends State<AppLockPage> {
-  final _controller = PinInputController();
+  static const _pinLength = 4;
+
+  String _pin = '';
   bool _error = false;
+  bool _canUseBiometrics = false;
 
   static const _ink = Color(0xff2e2210);
   static const _muted = Color(0xff6b5838);
+  static const _keyInk = Color(0xff5a4a2e);
   static const _gold = Color(0xffb8730a);
   static const _cellFill = Color(0xfff8f0e0);
+  static const _shadow = Color(0xff9a6410);
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    unawaited(_checkBiometrics());
+  }
+
+  Future<void> _checkBiometrics() async {
+    try {
+      final can = await deviceService.canAuthenticateUser();
+      if (mounted) setState(() => _canUseBiometrics = can);
+    } catch (_) {
+      // biometrics unavailable, keep the keypad only
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final cellShadow = [
-      BoxShadow(color: const Color(0xff9a6410).withValues(alpha: .10), blurRadius: 10, offset: const Offset(3, 4)),
-      const BoxShadow(color: Colors.white, blurRadius: 8, offset: Offset(-3, -3)),
-    ];
     return Material(
       child: DecoratedBox(
         decoration: const BoxDecoration(
@@ -61,40 +72,28 @@ class _AppLockPageState extends State<AppLockPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 132,
-                          height: 132,
+                          width: 120,
+                          height: 120,
                           alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            borderRadius: const BorderRadius.all(Radius.circular(38)),
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xfffffdf8), Color(0xfff6ecd8)],
-                            ),
-                            border: Border.all(color: Colors.white.withValues(alpha: .9)),
-                            boxShadow: [
-                              BoxShadow(color: const Color(0xff9a6410).withValues(alpha: .16), blurRadius: 22, offset: const Offset(8, 10)),
-                              const BoxShadow(color: Colors.white, blurRadius: 16, offset: Offset(-6, -6)),
-                            ],
-                          ),
+                          decoration: _raisedDecoration(radius: 36),
                           child: const CustomPaint(
-                            size: Size(72, 84),
+                            size: Size(64, 76),
                             painter: ShieldLogoPainter(),
                           ),
                         ),
-                        const SizedBox(height: 26),
+                        const SizedBox(height: 22),
                         const Text(
                           'Best gallery',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: _ink, fontSize: 30, fontWeight: FontWeight.w700),
+                          style: TextStyle(color: _ink, fontSize: 28, fontWeight: FontWeight.w700),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         const Text(
                           'SECURE BY NORTHX',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: _muted, fontSize: 12, letterSpacing: 3),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 28),
                         Text(
                           _error ? l10n.appLockWrongPin : l10n.pinDialogEnter,
                           style: TextStyle(
@@ -102,35 +101,14 @@ class _AppLockPageState extends State<AppLockPage> {
                             fontSize: 15,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        MaterialPinField(
-                          length: 4,
-                          pinController: _controller,
-                          keyboardType: TextInputType.number,
-                          autoFocus: true,
-                          obscureText: true,
-                          theme: MaterialPinTheme(
-                            shape: MaterialPinShape.outlined,
-                            cellSize: const Size(56, 64),
-                            spacing: 14,
-                            borderRadius: const BorderRadius.all(Radius.circular(18)),
-                            fillColor: _cellFill,
-                            focusedFillColor: _cellFill,
-                            filledFillColor: _cellFill,
-                            borderColor: Colors.white,
-                            focusedBorderColor: const Color(0xfff2b530),
-                            filledBorderColor: Colors.white,
-                            textStyle: const TextStyle(color: _gold, fontSize: 24, fontWeight: FontWeight.w700),
-                            cursorColor: _gold,
-                            boxShadows: cellShadow,
-                            focusedBoxShadows: cellShadow,
-                          ),
-                          onChanged: (v) {
-                            if (_error && v.isNotEmpty) setState(() => _error = false);
-                          },
-                          onCompleted: _submit,
+                        const SizedBox(height: 14),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(_pinLength, _buildCell),
                         ),
-                        const SizedBox(height: 56),
+                        const SizedBox(height: 26),
+                        _buildKeypad(),
+                        const SizedBox(height: 22),
                         const Text(
                           'REFINE BY NORTHXBAR',
                           textAlign: TextAlign.center,
@@ -148,11 +126,154 @@ class _AppLockPageState extends State<AppLockPage> {
     );
   }
 
+  static BoxDecoration _raisedDecoration({required double radius}) => BoxDecoration(
+    borderRadius: BorderRadius.all(Radius.circular(radius)),
+    gradient: const LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [Color(0xfffffdf8), Color(0xfff6ecd8)],
+    ),
+    border: Border.all(color: Colors.white.withValues(alpha: .95)),
+    boxShadow: [
+      BoxShadow(color: _shadow.withValues(alpha: .16), blurRadius: 18, offset: const Offset(6, 8)),
+      const BoxShadow(color: Colors.white, blurRadius: 12, offset: Offset(-5, -5)),
+    ],
+  );
+
+  Widget _buildCell(int index) {
+    final filled = index < _pin.length;
+    final focused = index == _pin.length;
+    return Container(
+      width: 54,
+      height: 62,
+      margin: const EdgeInsets.symmetric(horizontal: 7),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: _cellFill,
+        borderRadius: const BorderRadius.all(Radius.circular(18)),
+        border: Border.all(
+          color: _error
+              ? const Color(0xffd32f2f)
+              : focused
+              ? const Color(0xfff2b530)
+              : Colors.white,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(color: _shadow.withValues(alpha: .10), blurRadius: 8, offset: const Offset(3, 4)),
+        ],
+      ),
+      child: filled
+          ? Container(
+              width: 13,
+              height: 13,
+              decoration: BoxDecoration(
+                color: const Color(0xffc27a0e),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: const Color(0xfff2b530).withValues(alpha: .8), blurRadius: 10),
+                ],
+              ),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildKeypad() {
+    Widget key({required Widget child, required VoidCallback? onTap, String? semanticsLabel}) {
+      return Padding(
+        padding: const EdgeInsets.all(7),
+        child: Semantics(
+          button: true,
+          label: semanticsLabel,
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: onTap,
+              customBorder: const StadiumBorder(),
+              child: Ink(
+                width: 68,
+                height: 54,
+                decoration: _raisedDecoration(radius: 27),
+                child: Center(child: child),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    Widget digit(String d) => key(
+      onTap: () => _onDigit(d),
+      child: Text(
+        d,
+        style: const TextStyle(color: _keyInk, fontSize: 22, fontWeight: FontWeight.w600),
+      ),
+    );
+
+    final rows = [
+      ['1', '2', '3'],
+      ['4', '5', '6'],
+      ['7', '8', '9'],
+    ];
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ...rows.map((row) => Row(mainAxisSize: MainAxisSize.min, children: row.map(digit).toList())),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _canUseBiometrics
+                ? key(
+                    onTap: _authenticate,
+                    semanticsLabel: 'Fingerprint',
+                    child: const Icon(Icons.fingerprint, color: _gold, size: 28),
+                  )
+                : const SizedBox(width: 82, height: 68),
+            digit('0'),
+            key(
+              onTap: _pin.isEmpty ? null : _onBackspace,
+              semanticsLabel: 'Backspace',
+              child: const Icon(Icons.backspace_outlined, color: _keyInk, size: 22),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _onDigit(String d) {
+    if (_pin.length >= _pinLength) return;
+    unawaited(HapticFeedback.selectionClick());
+    setState(() {
+      _error = false;
+      _pin += d;
+    });
+    if (_pin.length == _pinLength) _submit(_pin);
+  }
+
+  void _onBackspace() {
+    setState(() => _pin = _pin.substring(0, _pin.length - 1));
+  }
+
+  Future<void> _authenticate() async {
+    try {
+      final confirmed = await LocalAuthentication().authenticate(
+        localizedReason: 'Best gallery',
+      );
+      if (confirmed) appLock.unlockWithSystemAuth();
+    } on PlatformException catch (_) {
+      // authentication cancelled or not available, keep the keypad
+    }
+  }
+
   void _submit(String pin) {
     if (appLock.unlock(pin)) return;
     unawaited(HapticFeedback.heavyImpact());
-    _controller.clear();
-    setState(() => _error = true);
+    setState(() {
+      _pin = '';
+      _error = true;
+    });
   }
 }
 
