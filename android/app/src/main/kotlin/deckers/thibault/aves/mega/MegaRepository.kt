@@ -6,7 +6,9 @@ import android.net.Uri
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import deckers.thibault.aves.model.EntryFields
 import deckers.thibault.aves.utils.LogUtils
+import org.json.JSONObject
 import deckers.thibault.aves.utils.MimeTypes
 import java.io.File
 import java.io.FileOutputStream
@@ -179,6 +181,40 @@ object MegaRepository {
     private fun filesDir(context: Context) = File(cacheRoot(context), "files").apply { mkdirs() }
     private fun attrsDir(context: Context) = File(cacheRoot(context), "attrs").apply { mkdirs() }
     private fun headsDir(context: Context) = File(cacheRoot(context), "heads").apply { mkdirs() }
+    private fun detailsDir(context: Context) = File(cacheRoot(context), "details").apply { mkdirs() }
+
+    // dimensions, orientation and dates read from files, so that folders open instantly the next time
+    private val detailIntKeys = listOf(EntryFields.WIDTH, EntryFields.HEIGHT, EntryFields.SOURCE_ROTATION_DEGREES)
+    private val detailLongKeys = listOf(EntryFields.SOURCE_DATE_TAKEN_MILLIS, EntryFields.DURATION_MILLIS)
+
+    fun getDetails(context: Context, handle: String): Map<String, Any>? {
+        val file = File(detailsDir(context), "$handle.json")
+        if (!file.exists()) return null
+        return try {
+            val o = JSONObject(file.readText())
+            val map = HashMap<String, Any>()
+            detailIntKeys.forEach { key -> if (o.has(key)) map[key] = o.getInt(key) }
+            detailLongKeys.forEach { key -> if (o.has(key)) map[key] = o.getLong(key) }
+            map
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "failed to read cached details for handle=$handle", e)
+            null
+        }
+    }
+
+    fun saveDetails(context: Context, handle: String, fields: Map<String, Any?>) {
+        try {
+            val o = JSONObject()
+            (detailIntKeys + detailLongKeys).forEach { key ->
+                when (val value = fields[key]) {
+                    is Number -> o.put(key, value.toLong())
+                }
+            }
+            File(detailsDir(context), "$handle.json").writeText(o.toString())
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "failed to cache details for handle=$handle", e)
+        }
+    }
 
     fun clearCache(context: Context) {
         cacheRoot(context).deleteRecursively()

@@ -44,13 +44,17 @@ class MegaImageProvider : ImageProvider() {
         val mimeType = MegaRepository.mimeTypeFor(node.name) ?: sourceMimeType ?: throw Exception("unknown MIME type for name=${node.name}")
         val isVideo = MimeTypes.isVideo(mimeType)
 
+        // reuse details read previously
+        val cached = MegaRepository.getDetails(context, node.handle)
+        var probed: FieldMap? = cached?.let { HashMap<String, Any?>(it) }?.takeIf(::isSized)
         // read dimensions/orientation/date from the beginning of the file, to avoid downloading everything
-        var probed: FieldMap? = null
-        for (length in if (isVideo) listOf(HEAD_LENGTH_LARGE) else listOf(HEAD_LENGTH, HEAD_LENGTH_LARGE)) {
-            probed = probe(context, MegaRepository.getHead(context, node, length), mimeType)
-            if (probed != null && isSized(probed)) break
+        if (probed == null) {
+            for (length in if (isVideo) listOf(HEAD_LENGTH_LARGE) else listOf(HEAD_LENGTH, HEAD_LENGTH_LARGE)) {
+                probed = probe(context, MegaRepository.getHead(context, node, length), mimeType)
+                if (probed != null && isSized(probed)) break
+            }
         }
-        if ((probed == null || !isSized(probed)) && !isVideo) {
+        if ((probed == null || !isSized(probed)) && !isVideo && cached == null) {
             // e.g. metadata at the end of the file
             probed = probe(context, MegaRepository.getFile(context, node), mimeType)
         }
@@ -61,6 +65,9 @@ class MegaImageProvider : ImageProvider() {
                 fields[EntryFields.WIDTH] = w
                 fields[EntryFields.HEIGHT] = h
             }
+        }
+        if (cached == null && isSized(fields)) {
+            MegaRepository.saveDetails(context, node.handle, fields)
         }
 
         fields[EntryFields.ORIGIN] = SourceEntry.ORIGIN_MEGA

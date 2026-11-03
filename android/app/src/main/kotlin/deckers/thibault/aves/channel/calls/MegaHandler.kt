@@ -109,7 +109,7 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
     }
 
     // basic fields, available without downloading anything
-    private fun fileFields(node: MegaNode): Map<String, Any?> = hashMapOf(
+    private fun fileFields(node: MegaNode): Map<String, Any?> = (MegaRepository.getDetails(context, node.handle) ?: emptyMap()) + hashMapOf(
         "uri" to MegaRepository.uriFor(context, node.handle).toString(),
         "path" to MegaImageProvider.virtualPath(node),
         "sourceMimeType" to MegaRepository.mimeTypeFor(node.name),

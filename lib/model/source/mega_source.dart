@@ -69,9 +69,12 @@ class MegaSource extends CollectionSource {
         return AvesEntry.fromMap(fields);
       }).toSet();
       clearEntries();
-      updateDerivedFilters();
-      // entries are added once sized, as the viewer needs dimensions
-      await _fetchDetails(entries);
+      // entries with details from a previous visit are shown right away
+      final known = entries.where((entry) => entry.width > 0 && entry.height > 0).toSet();
+      addEntries(known);
+      updateDerivedFilters(known);
+      // other entries are added once sized, as the viewer needs dimensions
+      await _fetchDetails(entries.difference(known));
       if (!_disposed) state = SourceState.ready;
     } catch (error) {
       debugPrint('$runtimeType failed to load folder=$folderHandle with error=$error');
