@@ -21,6 +21,7 @@ import 'package:aves/widgets/collection/filter_bar.dart';
 import 'package:aves/widgets/collection/layout_bar.dart';
 import 'package:aves/widgets/collection/memories_bar.dart';
 import 'package:aves/widgets/collection/query_bar.dart';
+import 'package:aves/widgets/collection/quick_filter_bar.dart';
 import 'package:aves/widgets/common/action_controls/quick_choosers/move_button.dart';
 import 'package:aves/widgets/common/action_controls/quick_choosers/rate_button.dart';
 import 'package:aves/widgets/common/action_controls/quick_choosers/tag_button.dart';
@@ -115,6 +116,8 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
   }
 
   bool get showMemoriesBar => _memories.isNotEmpty;
+
+  bool get showQuickFilterBar => collection.filters.isEmpty && !settings.useTvLayout;
 
   bool _lastShowMemoriesBar = false;
 
@@ -252,6 +255,7 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
                                 collection: collection,
                                 memories: _memories,
                               ),
+                            if (showQuickFilterBar) QuickFilterBar(collection: collection),
                             if (useTvLayout)
                               SizedBox(
                                 height: CaptionedButton.getTelevisionButtonHeight(context),
@@ -319,6 +323,9 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
     _lastShowMemoriesBar = showMemoriesBar;
     if (_lastShowMemoriesBar) {
       height += MemoriesBar.preferredHeight;
+    }
+    if (showQuickFilterBar) {
+      height += QuickFilterBar.preferredHeight;
     }
     if (settings.useTvLayout) {
       height += CaptionedButton.getTelevisionButtonHeight(context);

@@ -217,8 +217,8 @@ class _FilterGridState<T extends CollectionFilter> extends State<_FilterGrid<T>>
       columnCountDefault: settings.useTvLayout ? 4 : 3,
       extentMin: 60,
       extentMax: 300,
-      spacing: 8,
-      horizontalPadding: 2,
+      spacing: 12,
+      horizontalPadding: 10,
     );
     return AvesPopScope(
       handlers: [

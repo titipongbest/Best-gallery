@@ -2,6 +2,7 @@
   "wipeInProgress": "Wiping securely…",
   "wipeSuccessFeedback": "{count, plural, =1{Securely wiped 1 item} other{Securely wiped {count} items}}",
   "@wipeSuccessFeedback": {"placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},
+  "quickFilterAll": "All",
   "memoriesTitle": "On this day",
   "memoriesYearsAgo": "{count, plural, =1{1 year ago} other{{count} years ago}}",
   "@memoriesYearsAgo": {"placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},

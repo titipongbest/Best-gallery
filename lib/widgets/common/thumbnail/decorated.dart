@@ -23,6 +23,8 @@ class const DecoratedThumbnail({
 
   static double borderWidth(BuildContext context) => AvesBorder.straightBorderWidth(context);
 
+  static const radius = BorderRadius.all(Radius.circular(12));
+
   @override
   Widget build(BuildContext context) {
     final double thumbnailHeight = tileExtent;
@@ -66,20 +68,14 @@ class const DecoratedThumbnail({
       ],
     );
 
-    return Container(
-      // `decoration` with sub logical pixel width yields scintillating borders
-      // so we use `foregroundDecoration` instead
-      foregroundDecoration: BoxDecoration(
-        border: Border.fromBorderSide(
-          BorderSide(
-            color: borderColor(context),
-            width: borderWidth(context),
-          ),
-        ),
-      ),
+    // Best gallery: soft rounded tiles
+    return SizedBox(
       width: thumbnailWidth,
       height: thumbnailHeight,
-      child: child,
+      child: ClipRRect(
+        borderRadius: radius,
+        child: child,
+      ),
     );
   }
 }

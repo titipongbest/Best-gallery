@@ -1,5 +1,6 @@
 {
     "wipeInProgress": "กำลังลบแบบเขียนทับ…",
+    "quickFilterAll": "ทั้งหมด",
     "memoriesTitle": "ความทรงจำวันนี้",
     "memoriesYearsAgo": "{count, plural, other{{count} ปีที่แล้ว}}",
     "wipeSuccessFeedback": "{count, plural, other{ลบแบบเขียนทับแล้ว {count} รายการ}}",

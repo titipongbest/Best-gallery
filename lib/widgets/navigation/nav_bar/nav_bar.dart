@@ -20,8 +20,8 @@ class const AppBottomNavBar({
   // collection loaded in the `CollectionPage`, if any
   final CollectionLens? currentCollection,
 }) extends StatefulWidget {
-  // taller than the default bottom bar, to fit the selected label under its pill indicator
-  static const barHeight = 66.0;
+  // icons only, the selected one in a pill indicator
+  static const barHeight = 62.0;
 
   static EdgeInsets getMargin(double safeBottomPadding) {
     return EdgeInsets.only(left: 8, top: 8, right: 8, bottom: max(8, safeBottomPadding + 4));
@@ -98,7 +98,7 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
               backgroundColor: backgroundColor,
               elevation: 0,
               height: AppBottomNavBar.barHeight,
-              labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
             ),
           ),
         ),

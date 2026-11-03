@@ -1,6 +1,8 @@
 import 'package:aves/model/filters/container/album_group.dart';
 import 'package:aves/model/filters/container/dynamic_album.dart';
+import 'package:aves/model/filters/favourite.dart';
 import 'package:aves/model/filters/filters.dart';
+import 'package:aves/model/filters/mime.dart';
 import 'package:aves/model/grouping/common.dart';
 import 'package:aves/model/settings/defaults.dart';
 import 'package:aves/widgets/collection/collection_page.dart';
@@ -10,6 +12,7 @@ import 'package:aves/widgets/filter_grids/tags_page.dart';
 import 'package:aves/widgets/navigation/nav_item.dart';
 import 'package:aves_model/aves_model.dart';
 import 'package:aves_utils/aves_utils.dart';
+import 'package:collection/collection.dart';
 import 'package:synchronized/synchronized.dart';
 
 mixin NavigationSettings on SettingsAccess {
@@ -85,6 +88,22 @@ mixin NavigationSettings on SettingsAccess {
   set bottomNavigationActions(List<AvesNavItem>? newValue) => set(SettingKeys.bottomNavigationActionsKey, newValue?.map((v) => v.toJson()).toList());
 
   bool get enableBottomNavigationBar => bottomNavigationActions.length >= 2;
+
+  // Best gallery 2.0: devices still on the previous default bottom bar get the new default
+  void migrateBottomNavigationActions() {
+    final stored = getStringList(SettingKeys.bottomNavigationActionsKey);
+    if (stored == null) return;
+    final current = stored.map(AvesNavItem.fromJson).nonNulls.toList();
+    final previousDefault = [
+      const AvesNavItem(route: CollectionPage.routeName),
+      AvesNavItem(route: CollectionPage.routeName, filters: {MimeFilter.video}),
+      AvesNavItem(route: CollectionPage.routeName, filters: {FavouriteFilter.instance}),
+      const AvesNavItem(route: AlbumListPage.routeName),
+    ];
+    if (const ListEquality<AvesNavItem>().equals(current, previousDefault)) {
+      bottomNavigationActions = SettingsDefaults.bottomNavigationActions;
+    }
+  }
 
   // listening
 

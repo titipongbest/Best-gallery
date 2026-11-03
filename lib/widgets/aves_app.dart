@@ -454,6 +454,7 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
     await device.init();
     await mobileServices.init();
     await settings.init(monitorPlatformSettings: true, shouldSanitize: true);
+    settings.migrateBottomNavigationActions();
     settings.isRotationLocked = await windowService.isRotationLocked();
     settings.longPressTimeoutMillis = await AccessibilityService.getLongPressTimeout();
     settings.areAnimationsRemoved = await AccessibilityService.areAnimationsRemoved();
