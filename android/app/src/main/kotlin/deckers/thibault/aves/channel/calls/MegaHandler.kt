@@ -25,6 +25,7 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
             "logout" -> ioScope.launch { safe(call, result, ::logout) }
             "listFolder" -> ioScope.launch { safe(call, result, ::listFolder) }
             "clearCache" -> ioScope.launch { safe(call, result, ::clearCache) }
+            "getLocalFile" -> ioScope.launch { safe(call, result, ::getLocalFile) }
             else -> result.notImplemented()
         }
     }
@@ -60,6 +61,26 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
     private fun logout(@Suppress("unused_parameter") call: MethodCall, result: MethodChannel.Result) {
         MegaRepository.logout(context)
         result.success(true)
+    }
+
+    // downloads the file if needed, so that players can open it without blocking the main thread
+    private fun getLocalFile(call: MethodCall, result: MethodChannel.Result) {
+        val uri = call.argument<String>("uri")?.let { android.net.Uri.parse(it) }
+        val handle = uri?.let { MegaRepository.handleFromUri(it) }
+        if (handle == null) {
+            result.error("getLocalFile-args", "invalid uri=$uri", null)
+            return
+        }
+        try {
+            val node = MegaRepository.getNode(context, handle)
+            if (node == null) {
+                result.error("getLocalFile-node", "no node for uri=$uri", null)
+                return
+            }
+            result.success(MegaRepository.getFile(context, node).absolutePath)
+        } catch (e: Exception) {
+            reportError(result, "getLocalFile", e)
+        }
     }
 
     private fun clearCache(@Suppress("unused_parameter") call: MethodCall, result: MethodChannel.Result) {

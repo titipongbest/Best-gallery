@@ -209,7 +209,7 @@ class MpvVideoController(
     // cf https://github.com/media-kit/media-kit/issues/1061
 
     await _applyLoop();
-    await _mkPlayer.open(Media(entry.uri), play: playing);
+    await _mkPlayer.open(Media(await MediaUris.resolve(entry.uri)), play: playing);
     await _mkPlayer.setSubtitleTrack(SubtitleTrack.no());
     if (startMillis > 0) {
       await seekTo(startMillis);

@@ -1,4 +1,5 @@
 import 'package:aves/services/common/channel.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 final MegaService megaService = PlatformMegaService();
@@ -116,6 +117,9 @@ abstract class MegaService {
   Future<MegaFolderListing> listFolder({String? handle, bool refresh = false});
 
   Future<void> clearCache();
+
+  // path of the decrypted file in the cache, downloaded if needed
+  Future<String?> getLocalFilePath(String uri);
 }
 
 class PlatformMegaService implements MegaService {
@@ -174,6 +178,16 @@ class PlatformMegaService implements MegaService {
       await _platform.invokeMethod('clearCache');
     } on PlatformException catch (_) {
       // ignore
+    }
+  }
+
+  @override
+  Future<String?> getLocalFilePath(String uri) async {
+    try {
+      return await _platform.invokeMethod<String>('getLocalFile', <String, dynamic>{'uri': uri});
+    } on PlatformException catch (e) {
+      debugPrint('failed to get local file for uri=$uri with exception=$e');
+      return null;
     }
   }
 }

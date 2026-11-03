@@ -10,6 +10,7 @@ import 'package:aves/model/app_inventory.dart';
 import 'package:aves/model/app_lock.dart';
 import 'package:aves/model/mega_lock.dart';
 import 'package:aves/services/crash_log_service.dart';
+import 'package:aves/services/mega_service.dart';
 import 'package:aves/model/device.dart';
 import 'package:aves/model/filters/recent.dart';
 import 'package:aves/model/settings/defaults.dart';
@@ -58,6 +59,7 @@ import 'package:collection/collection.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:equatable/equatable.dart';
 import 'package:event_bus/event_bus.dart';
+import 'package:aves_video/aves_video.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations_plus/flutter_localizations_plus.dart';
@@ -459,6 +461,8 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
     // Best gallery: load the app lock state before showing any content
     await appLock.init();
     await megaLock.init();
+    // MEGA videos are downloaded before playing, as players open content on the main thread
+    MediaUris.resolver = (uri) async => uri.startsWith('content://${device.packageName}.mega/') ? await megaService.getLocalFilePath(uri) : null;
     await device.init();
     await mobileServices.init();
     await settings.init(monitorPlatformSettings: true, shouldSanitize: true);
