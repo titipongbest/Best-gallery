@@ -23,6 +23,7 @@ import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/common/extensions/media_query.dart';
 import 'package:aves/widgets/common/identity/aves_logo.dart';
 import 'package:aves/widgets/debug/app_debug_page.dart';
+import 'package:aves/widgets/dialogs/aves_dialog.dart';
 import 'package:aves/widgets/explorer/explorer_page.dart';
 import 'package:aves/widgets/filter_grids/albums_page.dart';
 import 'package:aves/widgets/filter_grids/countries_page.dart';
@@ -127,6 +128,7 @@ class _AppDrawerState extends State<AppDrawer> with WidgetsBindingObserver {
       ..._buildPageLinks(context),
       const Divider(),
       megaTile(context),
+      igRenamerTile(context),
       if (settings.enableBin) ...[
         const Divider(),
         binTile(context),
@@ -430,6 +432,24 @@ class _AppDrawerState extends State<AppDrawer> with WidgetsBindingObserver {
             builder: (_) => const MegaPage(),
           ),
         );
+      },
+    );
+  }
+
+  // Best gallery: shortcut to the IG ID Renamer app installed on the device
+  static const _igRenamerPackage = 'com.example.igrenamer';
+
+  Widget igRenamerTile(BuildContext context) {
+    return ListTile(
+      key: const Key('drawer-ig-renamer'),
+      leading: const Icon(AIcons.rename),
+      title: const Text('IG ID Renamer'),
+      trailing: const Icon(AIcons.openOutside, size: 18),
+      onTap: () async {
+        final launched = await appService.launchApp(_igRenamerPackage);
+        if (!launched && context.mounted) {
+          await showNoMatchingAppDialog(context);
+        }
       },
     );
   }
