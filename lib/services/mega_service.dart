@@ -118,6 +118,9 @@ abstract class MegaService {
   // root folder when `handle` is null, throws [MegaException]
   Future<MegaFolderListing> listFolder({String? handle, bool refresh = false});
 
+  // downloaded photos, videos and thumbnails, kept until logout
+  Future<int> getCacheSize();
+
   Future<void> clearCache();
 
   // path of the decrypted file in the cache, downloaded if needed
@@ -175,6 +178,17 @@ class PlatformMegaService implements MegaService {
     } on PlatformException catch (e) {
       throw MegaException.fromPlatform(e);
     }
+  }
+
+  @override
+  Future<int> getCacheSize() async {
+    try {
+      final result = await _platform.invokeMethod('getCacheSize');
+      if (result is int) return result;
+    } on PlatformException catch (_) {
+      // ignore
+    }
+    return 0;
   }
 
   @override

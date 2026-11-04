@@ -4,6 +4,9 @@ import 'package:aves/model/mega_lock.dart';
 import 'package:aves/model/source/collection_source.dart';
 import 'package:aves/model/source/mega_source.dart';
 import 'package:aves/services/mega_service.dart';
+import 'package:aves/widgets/dialogs/aves_confirmation_dialog.dart';
+import 'package:aves/utils/file_utils.dart';
+import 'package:aves/model/settings/settings.dart';
 import 'package:aves/theme/icons.dart';
 import 'package:aves/widgets/collection/collection_page.dart';
 import 'package:aves/widgets/common/basic/scaffold.dart';
@@ -348,6 +351,7 @@ class _MegaFolderViewState extends State<MegaFolderView> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                   child: Text(l10n.megaSignedInAs(widget.email), style: Theme.of(context).textTheme.bodySmall),
                 ),
+              if (widget.folderHandle == null) const MegaCacheTile(),
               if (mediaCount > 0)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -384,6 +388,65 @@ class _MegaFolderViewState extends State<MegaFolderView> {
           },
         ),
       ),
+    );
+  }
+}
+
+// size of the downloaded photos, videos and thumbnails, with a button to clear them
+class MegaCacheTile extends StatefulWidget {
+  const new({super.key});
+
+  @override
+  State<MegaCacheTile> createState() => _MegaCacheTileState();
+}
+
+class _MegaCacheTileState extends State<MegaCacheTile> {
+  late Future<int> _sizeLoader;
+  bool _clearing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _sizeLoader = megaService.getCacheSize();
+  }
+
+  Future<void> _clear() async {
+    final l10n = context.l10n;
+    final confirmed = await showConfirmationDialog(
+      context: context,
+      message: l10n.megaClearCacheConfirmation,
+      ok: l10n.megaClearCacheButton,
+    );
+    if (!confirmed || !mounted) return;
+    setState(() => _clearing = true);
+    await megaService.clearCache();
+    if (!mounted) return;
+    setState(() {
+      _clearing = false;
+      _sizeLoader = megaService.getCacheSize();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return FutureBuilder<int>(
+      future: _sizeLoader,
+      builder: (context, snapshot) {
+        final size = snapshot.data;
+        final sizeText = size == null ? '…' : formatFileSize(settings.avesLocale, size, round: 1);
+        return ListTile(
+          leading: const Icon(AIcons.storageMain),
+          title: Text(l10n.megaCacheTitle),
+          subtitle: Text(l10n.megaCacheSubtitle(sizeText)),
+          trailing: _clearing
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+              : TextButton(
+                  onPressed: size == null || size == 0 ? null : _clear,
+                  child: Text(l10n.megaClearCacheButton),
+                ),
+        );
+      },
     );
   }
 }

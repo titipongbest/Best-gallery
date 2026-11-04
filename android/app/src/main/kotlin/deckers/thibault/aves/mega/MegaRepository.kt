@@ -300,6 +300,20 @@ object MegaRepository {
         }
     }
 
+    // downloaded files, thumbnails and partial downloads, without the folder tree and photo details
+    private fun mediaCacheDirs(context: Context) = listOf(filesDir(context), headsDir(context), attrsDir(context))
+
+    fun getMediaCacheSize(context: Context): Long = mediaCacheDirs(context).sumOf { dir ->
+        dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+    }
+
+    fun clearMediaCache(context: Context) {
+        mediaCacheDirs(context).forEach { dir ->
+            // keep files being downloaded, which are written by other threads
+            dir.listFiles()?.filter { !it.name.endsWith(".part") }?.forEach { it.deleteRecursively() }
+        }
+    }
+
     fun clearCache(context: Context) {
         cacheRoot(context).deleteRecursively()
     }

@@ -8,7 +8,7 @@ publish_to: none
 # - edit GitHub changelog:     /CHANGELOG.md
 # - edit Play Store changelog: /whatsnew/whatsnew-en-US
 # - run `scripts/apply_version_bump.sh`
-version: 2.2.8+203
+version: 2.2.9+204
 
 environment:
   # this project bundles Flutter SDK via `flutter_wrapper`

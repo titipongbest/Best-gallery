@@ -27,6 +27,7 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
             "clearCache" -> ioScope.launch { safe(call, result, ::clearCache) }
             "getLocalFile" -> ioScope.launch { safe(call, result, ::getLocalFile) }
             "getDownloadProgress" -> ioScope.launch { safe(call, result, ::getDownloadProgress) }
+            "getCacheSize" -> ioScope.launch { safe(call, result, ::getCacheSize) }
             else -> result.notImplemented()
         }
     }
@@ -95,8 +96,12 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
         result.success(hashMapOf("downloaded" to downloaded, "total" to node.size))
     }
 
+    private fun getCacheSize(@Suppress("unused_parameter") call: MethodCall, result: MethodChannel.Result) {
+        result.success(MegaRepository.getMediaCacheSize(context))
+    }
+
     private fun clearCache(@Suppress("unused_parameter") call: MethodCall, result: MethodChannel.Result) {
-        MegaRepository.clearCache(context)
+        MegaRepository.clearMediaCache(context)
         result.success(true)
     }
 
