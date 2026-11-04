@@ -25,9 +25,6 @@ object MegaRepository {
     // node tree is refetched after this delay, or on explicit refresh
     private const val NODES_TTL_MILLIS = 10 * 60 * 1000L
 
-    // cap for decrypted full size files kept on disk
-    private const val FILE_CACHE_MAX_BYTES = 512L * 1024 * 1024
-
     private val client = MegaClient()
     private val lock = Any()
     private var loadedSession = false
@@ -177,7 +174,18 @@ object MegaRepository {
 
     // content
 
-    private fun cacheRoot(context: Context) = File(context.cacheDir, "mega")
+    // downloaded files are kept until logout, in the app private storage:
+    // other apps cannot access it, the system does not clear it when space is low,
+    // and it is excluded from backups (cf `data_extraction_rules.xml` and `full_backup_content.xml`)
+    private fun cacheRoot(context: Context): File {
+        val root = File(context.filesDir, "mega")
+        if (!root.exists()) {
+            // files downloaded by previous versions, in the cache directory
+            val legacy = File(context.cacheDir, "mega")
+            if (legacy.exists() && !legacy.renameTo(root)) legacy.deleteRecursively()
+        }
+        return root
+    }
     private fun filesDir(context: Context) = File(cacheRoot(context), "files").apply { mkdirs() }
     private fun attrsDir(context: Context) = File(cacheRoot(context), "attrs").apply { mkdirs() }
     private fun headsDir(context: Context) = File(cacheRoot(context), "heads").apply { mkdirs() }
@@ -239,7 +247,6 @@ object MegaRepository {
                 temp.delete()
             }
         }
-        trimFileCache(context)
         return target
     }
 
@@ -280,17 +287,6 @@ object MegaRepository {
             Log.w(LOG_TAG, "failed to cache file attribute for handle=${node.handle}", e)
         }
         return bytes
-    }
-
-    private fun trimFileCache(context: Context) {
-        val files = filesDir(context).listFiles()?.filter { it.isFile && !it.name.endsWith(".part") } ?: return
-        var total = files.sumOf { it.length() }
-        if (total <= FILE_CACHE_MAX_BYTES) return
-        for (file in files.sortedBy { it.lastModified() }) {
-            if (total <= FILE_CACHE_MAX_BYTES) break
-            total -= file.length()
-            file.delete()
-        }
     }
 
     // URIs
