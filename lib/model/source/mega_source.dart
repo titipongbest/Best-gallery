@@ -61,8 +61,9 @@ class MegaSource extends CollectionSource {
     try {
       final listing = await megaService.listFolder(handle: folderHandle, refresh: refresh);
       if (_disposed) return;
+      final knownUris = listing.files.where((map) => map['megaDetailsKnown'] == true).map((map) => map[EntryFields.uri]).toSet();
       final entries = listing.files.map((map) {
-        final fields = Map.of(map);
+        final fields = Map.of(map)..remove('megaDetailsKnown');
         fields[EntryFields.origin] = EntryOrigins.mega;
         // entries are kept by ID in the source, so each one needs its own
         fields[EntryFields.id] = localMediaDb.nextId;
@@ -70,7 +71,7 @@ class MegaSource extends CollectionSource {
       }).toSet();
       clearEntries();
       // entries with details from a previous visit are shown right away
-      final known = entries.where((entry) => entry.width > 0 && entry.height > 0).toSet();
+      final known = entries.where((entry) => (entry.width > 0 && entry.height > 0) || knownUris.contains(entry.uri)).toSet();
       addEntries(known);
       updateDerivedFilters(known);
       // other entries are added once sized, as the viewer needs dimensions

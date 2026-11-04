@@ -105,7 +105,38 @@ data class MegaNode(
     override fun equals(other: Any?): Boolean = other is MegaNode && handle == other.handle && name == other.name
     override fun hashCode(): Int = handle.hashCode()
 
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("h", handle)
+        parent?.let { put("p", it) }
+        put("t", type)
+        put("n", name)
+        put("s", size)
+        put("ts", timestamp)
+        modifiedTime?.let { put("mt", it) }
+        put("k", MegaCrypto.b64Encode(key))
+        put("a", attributes)
+        put("fa", JSONObject().apply { fileAttributes.forEach { (type, faHandle) -> put(type.toString(), faHandle) } })
+    }
+
     companion object {
+        fun fromJson(o: JSONObject): MegaNode {
+            val fa = o.optJSONObject("fa")
+            val fileAttributes = HashMap<Int, String>()
+            fa?.keys()?.forEach { key -> fileAttributes[key.toInt()] = fa.getString(key) }
+            return MegaNode(
+                handle = o.getString("h"),
+                parent = if (o.has("p")) o.getString("p") else null,
+                type = o.getInt("t"),
+                name = o.getString("n"),
+                size = o.getLong("s"),
+                timestamp = o.getLong("ts"),
+                modifiedTime = if (o.has("mt")) o.getLong("mt") else null,
+                key = MegaCrypto.b64Decode(o.getString("k")),
+                attributes = o.optJSONObject("a") ?: JSONObject(),
+                fileAttributes = fileAttributes,
+            )
+        }
+
         const val TYPE_FILE = 0
         const val TYPE_FOLDER = 1
         const val TYPE_ROOT = 2

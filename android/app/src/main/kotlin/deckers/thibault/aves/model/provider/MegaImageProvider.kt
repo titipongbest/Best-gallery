@@ -46,8 +46,9 @@ class MegaImageProvider : ImageProvider() {
 
         // reuse details read previously
         val cached = MegaRepository.getDetails(context, node.handle)
-        var probed: FieldMap? = cached?.let { HashMap<String, Any?>(it) }?.takeIf(::isSized)
-        // read dimensions/orientation/date from the beginning of the file, to avoid downloading everything
+        var probed: FieldMap? = cached?.let { HashMap<String, Any?>(it) }
+        // read dimensions/orientation/date from the beginning of the file, to avoid downloading everything.
+        // files probed before are not probed again, even when their dimensions could not be read
         if (probed == null) {
             for (length in if (isVideo) listOf(HEAD_LENGTH_LARGE) else listOf(HEAD_LENGTH, HEAD_LENGTH_LARGE)) {
                 probed = probe(context, MegaRepository.getHead(context, node, length), mimeType)
@@ -66,7 +67,7 @@ class MegaImageProvider : ImageProvider() {
                 fields[EntryFields.HEIGHT] = h
             }
         }
-        if (cached == null && isSized(fields)) {
+        if (cached == null) {
             MegaRepository.saveDetails(context, node.handle, fields)
         }
 

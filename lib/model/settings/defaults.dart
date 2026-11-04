@@ -50,9 +50,9 @@ class SettingsDefaults {
   ];
   static final bottomNavigationActions = [
     const AvesNavItem(route: CollectionPage.routeName),
-    const AvesNavItem(route: AlbumListPage.routeName),
-    const AvesNavItem(route: SearchPage.routeName),
     AvesNavItem(route: CollectionPage.routeName, filters: {FavouriteFilter.instance}),
+    const AvesNavItem(route: SearchPage.routeName),
+    const AvesNavItem(route: AlbumListPage.routeName),
   ];
 
   // collection

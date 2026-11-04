@@ -142,7 +142,11 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
     }
 
     // basic fields, available without downloading anything
-    private fun fileFields(node: MegaNode): Map<String, Any?> = (MegaRepository.getDetails(context, node.handle) ?: emptyMap()) + hashMapOf(
+    private fun fileFields(node: MegaNode): Map<String, Any?> {
+        val details = MegaRepository.getDetails(context, node.handle)
+        return (details ?: emptyMap()) + hashMapOf(
+        // whether details were read before, so that they are not fetched again
+        "megaDetailsKnown" to (details != null),
         "uri" to MegaRepository.uriFor(context, node.handle).toString(),
         "path" to MegaImageProvider.virtualPath(node),
         "sourceMimeType" to MegaRepository.mimeTypeFor(node.name),
@@ -151,7 +155,8 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
         "dateModifiedMillis" to (node.modifiedTime ?: node.timestamp) * 1000,
         "dateAddedSecs" to node.timestamp,
         "hasThumbnail" to node.fileAttributes.containsKey(MegaNode.FA_THUMBNAIL),
-    )
+        )
+    }
 
     companion object {
         const val CHANNEL = "deckers.thibault/aves/mega"

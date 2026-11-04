@@ -38,6 +38,8 @@ object MegaRepository {
     @Volatile
     private var nodesFetchedAt = 0L
 
+    private val refreshingNodes = java.util.concurrent.atomic.AtomicBoolean(false)
+
     // per-file locks, so that concurrent requests for the same file download it once
     private val fileLocks = ConcurrentHashMap<String, Any>()
 
@@ -75,7 +77,7 @@ object MegaRepository {
             loadedSession = true
             val session = client.login(email, password, mfaCode)
             prefs(context).edit().putString(PREF_SESSION, session.toJson()).apply()
-            clearNodes()
+            clearNodes(context)
             return session
         }
     }
@@ -85,12 +87,13 @@ object MegaRepository {
             loadedSession = true
             client.logout()
             prefs(context).edit().clear().apply()
-            clearNodes()
+            clearNodes(context)
         }
         clearCache(context)
     }
 
-    private fun clearNodes() {
+    private fun clearNodes(context: Context) {
+        File(File(context.filesDir, "mega"), "nodes.bin").delete()
         nodes = emptyMap()
         children = emptyMap()
         nodesFetchedAt = 0
@@ -110,7 +113,7 @@ object MegaRepository {
                 synchronized(lock) {
                     client.session = null
                     prefs(context).edit().clear().apply()
-                    clearNodes()
+                    clearNodes(context)
                 }
             }
             throw e
@@ -119,13 +122,85 @@ object MegaRepository {
 
     // nodes
 
+    // The node tree is kept on disk, so that folders open without waiting for MEGA after the app restarts.
+    // A stale tree is refreshed in the background, and an explicit refresh waits for the latest tree.
     fun refreshNodes(context: Context, force: Boolean) {
+        if (force) {
+            fetchAndStoreNodes(context)
+            return
+        }
+        if (nodes.isEmpty()) {
+            synchronized(lock) {
+                if (nodes.isEmpty()) loadNodesFromDisk(context)
+            }
+        }
+        if (nodes.isEmpty()) {
+            fetchAndStoreNodes(context)
+            return
+        }
+        if (System.currentTimeMillis() - nodesFetchedAt >= NODES_TTL_MILLIS && refreshingNodes.compareAndSet(false, true)) {
+            val appContext = context.applicationContext
+            Thread {
+                try {
+                    fetchAndStoreNodes(appContext)
+                } catch (e: Exception) {
+                    Log.w(LOG_TAG, "failed to refresh nodes in the background", e)
+                } finally {
+                    refreshingNodes.set(false)
+                }
+            }.start()
+        }
+    }
+
+    private fun fetchAndStoreNodes(context: Context) {
+        val now = System.currentTimeMillis()
+        // fetch without holding the lock, so that other calls (e.g. thumbnails) are not blocked meanwhile
+        val fetched = withSession(context) { client.fetchNodes() }
         synchronized(lock) {
-            val now = System.currentTimeMillis()
-            if (!force && nodes.isNotEmpty() && now - nodesFetchedAt < NODES_TTL_MILLIS) return
-            val fetched = withSession(context) { client.fetchNodes() }
             setNodes(fetched)
             nodesFetchedAt = now
+            saveNodesToDisk(context)
+        }
+    }
+
+    private fun nodesFile(context: Context) = File(cacheRoot(context).apply { mkdirs() }, "nodes.bin")
+
+    // the tree holds file keys, so it is encrypted with the account master key,
+    // itself kept in encrypted preferences
+    private fun saveNodesToDisk(context: Context) {
+        val key = client.session?.masterKey ?: return
+        try {
+            val json = JSONObject().apply {
+                put("fetchedAt", nodesFetchedAt)
+                put("nodes", org.json.JSONArray().apply { nodes.values.forEach { put(it.toJson()) } })
+            }.toString().toByteArray(Charsets.UTF_8)
+            val iv = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+            val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, javax.crypto.spec.SecretKeySpec(key, "AES"), javax.crypto.spec.GCMParameterSpec(128, iv))
+            val file = nodesFile(context)
+            val temp = File(file.parentFile, "${file.name}.part")
+            temp.writeBytes(iv + cipher.doFinal(json))
+            if (!temp.renameTo(file)) temp.delete()
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "failed to save nodes", e)
+        }
+    }
+
+    private fun loadNodesFromDisk(context: Context) {
+        val session = ensureSession(context) ?: return
+        val file = nodesFile(context)
+        if (!file.exists()) return
+        try {
+            val bytes = file.readBytes()
+            val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(javax.crypto.Cipher.DECRYPT_MODE, javax.crypto.spec.SecretKeySpec(session.masterKey, "AES"), javax.crypto.spec.GCMParameterSpec(128, bytes, 0, 12))
+            val o = JSONObject(String(cipher.doFinal(bytes, 12, bytes.size - 12), Charsets.UTF_8))
+            val array = o.getJSONArray("nodes")
+            setNodes((0 until array.length()).map { MegaNode.fromJson(array.getJSONObject(it)) })
+            nodesFetchedAt = o.optLong("fetchedAt", 0)
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "failed to load saved nodes", e)
+            file.delete()
         }
     }
 
@@ -162,6 +237,7 @@ object MegaRepository {
             val updated = HashMap(nodes)
             updated[renamed.handle] = renamed
             setNodes(updated.values)
+            saveNodesToDisk(context)
         }
         return renamed
     }
