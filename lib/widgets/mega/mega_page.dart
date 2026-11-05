@@ -34,15 +34,14 @@ class _MegaPageState extends State<MegaPage> {
     megaLock.onPageOpened();
     // leaving the lock page goes back to the page that opened MEGA
     megaLock.onCancel = () {
+      if (!mounted) return;
       final route = ModalRoute.of(context);
       final navigator = Navigator.maybeOf(context);
-      if (route == null || navigator == null) return;
-      if (route.isCurrent) {
-        navigator.pop();
-      } else {
-        navigator.popUntil((r) => r == route);
-        navigator.pop();
-      }
+      // the MEGA page may already be leaving, e.g. after a back press while locked,
+      // and popping until a route that is no longer in the stack would pop every page
+      if (route == null || navigator == null || !route.isActive) return;
+      navigator.popUntil((r) => r == route || r.isFirst);
+      if (route.isCurrent && navigator.canPop()) navigator.pop();
     };
   }
 
