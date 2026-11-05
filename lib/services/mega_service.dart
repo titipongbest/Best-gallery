@@ -58,12 +58,16 @@ class MegaFolderSummary {
   final int mediaCount;
   final String? coverUri;
 
+  // parent folders, for search results
+  final String? location;
+
   const new({
     required this.handle,
     required this.name,
     required this.folderCount,
     required this.mediaCount,
     required this.coverUri,
+    this.location,
   });
 
   factory fromMap(Map map) => MegaFolderSummary(
@@ -72,6 +76,7 @@ class MegaFolderSummary {
     folderCount: map['folderCount'] as int? ?? 0,
     mediaCount: map['mediaCount'] as int? ?? 0,
     coverUri: map['coverUri'] as String?,
+    location: map['location'] as String?,
   );
 }
 
@@ -117,6 +122,9 @@ abstract class MegaService {
 
   // root folder when `handle` is null, throws [MegaException]
   Future<MegaFolderListing> listFolder({String? handle, bool refresh = false});
+
+  // folders and media files whose name contains the query, in the whole cloud drive, throws [MegaException]
+  Future<MegaFolderListing> search(String query);
 
   // downloaded photos, videos and thumbnails, kept until logout
   Future<int> getCacheSize();
@@ -174,6 +182,16 @@ class PlatformMegaService implements MegaService {
         'handle': handle,
         'refresh': refresh,
       });
+      return MegaFolderListing.fromMap(result as Map);
+    } on PlatformException catch (e) {
+      throw MegaException.fromPlatform(e);
+    }
+  }
+
+  @override
+  Future<MegaFolderListing> search(String query) async {
+    try {
+      final result = await _platform.invokeMethod('search', <String, dynamic>{'query': query});
       return MegaFolderListing.fromMap(result as Map);
     } on PlatformException catch (e) {
       throw MegaException.fromPlatform(e);

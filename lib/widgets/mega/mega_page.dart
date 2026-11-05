@@ -270,28 +270,21 @@ class _MegaFolderViewState extends State<MegaFolderView> {
     );
   }
 
-  Future<void> _openMedia(MegaFolderListing listing) async {
-    final source = MegaSource(folderHandle: listing.handle, folderName: listing.name);
-    unawaited(
-      source.init(scope: CollectionSource.fullScope).catchError((error) {
-        if (mounted) {
-          ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(megaErrorMessage(context, error))));
-        }
-      }),
-    );
-    await Navigator.maybeOf(context)?.push(
+  Future<void> _openMedia(MegaFolderListing listing) => openMegaMedia(
+    context,
+    MegaSource(folderHandle: listing.handle, folderName: listing.name),
+  );
+
+  void _openSearch() {
+    Navigator.maybeOf(context)?.push(
       MaterialPageRoute(
-        settings: const RouteSettings(name: CollectionPage.routeName),
-        builder: (context) => Provider<CollectionSource>.value(
-          value: source,
-          child: CollectionPage(
-            source: source,
-            filters: null,
-          ),
+        settings: const RouteSettings(name: MegaSearchPage.routeName),
+        builder: (context) => MegaSearchPage(
+          email: widget.email,
+          onLoggedOut: widget.onLoggedOut,
         ),
       ),
     );
-    source.dispose();
   }
 
   @override
@@ -301,6 +294,11 @@ class _MegaFolderViewState extends State<MegaFolderView> {
       appBar: AppBar(
         title: Text(widget.folderName ?? l10n.megaPageTitle),
         actions: [
+          IconButton(
+            icon: const Icon(AIcons.search),
+            tooltip: l10n.megaSearchTooltip,
+            onPressed: _openSearch,
+          ),
           IconButton(
             icon: const Icon(AIcons.refresh),
             tooltip: l10n.megaRefreshTooltip,
@@ -447,6 +445,172 @@ class _MegaCacheTileState extends State<MegaCacheTile> {
                 ),
         );
       },
+    );
+  }
+}
+
+// opens the media of a MEGA source in a collection page, and disposes the source when leaving
+Future<void> openMegaMedia(BuildContext context, MegaSource source) async {
+  unawaited(
+    source.init(scope: CollectionSource.fullScope).catchError((error) {
+      if (context.mounted) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(megaErrorMessage(context, error))));
+      }
+    }),
+  );
+  await Navigator.maybeOf(context)?.push(
+    MaterialPageRoute(
+      settings: const RouteSettings(name: CollectionPage.routeName),
+      builder: (context) => Provider<CollectionSource>.value(
+        value: source,
+        child: CollectionPage(
+          source: source,
+          filters: null,
+        ),
+      ),
+    ),
+  );
+  source.dispose();
+}
+
+// search by name in the whole MEGA cloud drive
+class MegaSearchPage extends StatefulWidget {
+  static const routeName = '/mega/search';
+
+  final String email;
+  final VoidCallback onLoggedOut;
+
+  const new({super.key, required this.email, required this.onLoggedOut});
+
+  @override
+  State<MegaSearchPage> createState() => _MegaSearchPageState();
+}
+
+class _MegaSearchPageState extends State<MegaSearchPage> {
+  final _controller = TextEditingController();
+  Timer? _debounce;
+  String _query = '';
+  Future<MegaFolderListing>? _results;
+
+  static const _debounceDelay = Duration(milliseconds: 350);
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(_debounceDelay, () => _search(value));
+  }
+
+  void _search(String value) {
+    final query = value.trim();
+    if (query == _query) return;
+    setState(() {
+      _query = query;
+      _results = query.isEmpty ? null : megaService.search(query);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AvesScaffold(
+      appBar: AppBar(
+        title: TextField(
+          controller: _controller,
+          autofocus: true,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: l10n.megaSearchHint,
+            border: InputBorder.none,
+          ),
+          onChanged: _onChanged,
+          onSubmitted: _search,
+        ),
+        actions: [
+          if (_controller.text.isNotEmpty)
+            IconButton(
+              icon: const Icon(AIcons.clear),
+              onPressed: () {
+                _controller.clear();
+                _search('');
+              },
+            ),
+        ],
+      ),
+      body: SafeArea(
+        child: _results == null
+            ? const SizedBox()
+            : FutureBuilder<MegaFolderListing>(
+                future: _results,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final error = snapshot.error;
+                  if (error != null) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(megaErrorMessage(context, error), textAlign: TextAlign.center),
+                      ),
+                    );
+                  }
+                  final listing = snapshot.data!;
+                  final mediaCount = listing.files.length;
+                  if (mediaCount == 0 && listing.folders.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Text(l10n.megaSearchEmpty, textAlign: TextAlign.center),
+                    );
+                  }
+                  return ListView(
+                    children: [
+                      if (mediaCount > 0)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                          child: FilledButton.tonalIcon(
+                            icon: const Icon(AIcons.image),
+                            label: Text(l10n.megaFolderMediaTile(mediaCount)),
+                            onPressed: () => openMegaMedia(
+                              context,
+                              MegaSource(folderHandle: listing.handle, folderName: _query, searchQuery: _query),
+                            ),
+                          ),
+                        ),
+                      ...listing.folders.map(
+                        (folder) => ListTile(
+                          leading: const Icon(AIcons.folder),
+                          title: Text(folder.name),
+                          subtitle: Text(
+                            [
+                              if (folder.location?.isNotEmpty == true) folder.location!,
+                              l10n.megaFolderSubtitle(folder.folderCount, folder.mediaCount),
+                            ].join('\n'),
+                          ),
+                          isThreeLine: folder.location?.isNotEmpty == true,
+                          onTap: () => Navigator.maybeOf(context)?.push(
+                            MaterialPageRoute(
+                              settings: const RouteSettings(name: '${MegaPage.routeName}/folder'),
+                              builder: (context) => MegaFolderView(
+                                email: widget.email,
+                                folderHandle: folder.handle,
+                                folderName: folder.name,
+                                onLoggedOut: widget.onLoggedOut,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+      ),
     );
   }
 }

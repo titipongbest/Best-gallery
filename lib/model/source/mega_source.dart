@@ -17,10 +17,13 @@ class MegaSource extends CollectionSource {
   final String folderHandle;
   final String folderName;
 
+  // media files matching this name in the whole cloud drive, instead of the folder content
+  final String? searchQuery;
+
   SourceScope _loadedScope, _targetScope;
   bool _disposed = false;
 
-  new({required this.folderHandle, required this.folderName});
+  new({required this.folderHandle, required this.folderName, this.searchQuery});
 
   static const _detailConcurrency = 4;
   static const _batchSize = 12;
@@ -59,7 +62,8 @@ class MegaSource extends CollectionSource {
   Future<void> _load({required bool refresh}) async {
     state = SourceState.loading;
     try {
-      final listing = await megaService.listFolder(handle: folderHandle, refresh: refresh);
+      final query = searchQuery;
+      final listing = query != null ? await megaService.search(query) : await megaService.listFolder(handle: folderHandle, refresh: refresh);
       if (_disposed) return;
       final knownUris = listing.files.where((map) => map['megaDetailsKnown'] == true).map((map) => map[EntryFields.uri]).toSet();
       final entries = listing.files.map((map) {

@@ -28,6 +28,7 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
             "getLocalFile" -> ioScope.launch { safe(call, result, ::getLocalFile) }
             "getDownloadProgress" -> ioScope.launch { safe(call, result, ::getDownloadProgress) }
             "getCacheSize" -> ioScope.launch { safe(call, result, ::getCacheSize) }
+            "search" -> ioScope.launch { safe(call, result, ::search) }
             else -> result.notImplemented()
         }
     }
@@ -118,16 +119,7 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
                 return
             }
             val children = MegaRepository.getChildren(folder.handle)
-            val folders = children.filter { it.isFolder }.sortedBy { it.name.lowercase() }.map { child ->
-                val grandChildren = MegaRepository.getChildren(child.handle)
-                hashMapOf(
-                    "handle" to child.handle,
-                    "name" to child.name,
-                    "folderCount" to grandChildren.count { it.isFolder },
-                    "mediaCount" to grandChildren.count { !it.isFolder && MegaRepository.isMedia(it.name) },
-                    "coverUri" to grandChildren.firstOrNull { !it.isFolder && MegaRepository.isMedia(it.name) }?.let { MegaRepository.uriFor(context, it.handle).toString() },
-                )
-            }
+            val folders = children.filter { it.isFolder }.sortedBy { it.name.lowercase() }.map(::folderSummary)
             val files = children.filter { !it.isFolder && MegaRepository.isMedia(it.name) }.map(::fileFields)
             result.success(
                 hashMapOf(
@@ -147,6 +139,50 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
     }
 
     // basic fields, available without downloading anything
+    private fun folderSummary(folder: MegaNode): HashMap<String, Any?> {
+        val children = MegaRepository.getChildren(folder.handle)
+        return hashMapOf(
+            "handle" to folder.handle,
+            "name" to folder.name,
+            "folderCount" to children.count { it.isFolder },
+            "mediaCount" to children.count { !it.isFolder && MegaRepository.isMedia(it.name) },
+            "coverUri" to children.firstOrNull { !it.isFolder && MegaRepository.isMedia(it.name) }?.let { MegaRepository.uriFor(context, it.handle).toString() },
+        )
+    }
+
+    // folder names from the cloud drive root (excluded) to the parent of the node
+    private fun locationOf(node: MegaNode): String = node.parent?.let { parent ->
+        MegaRepository.pathOf(parent).filter { it.type != MegaNode.TYPE_ROOT }.joinToString(" / ") { it.name }
+    } ?: ""
+
+    // folders and media files matching a name in the whole cloud drive, in the same shape as a folder listing
+    private fun search(call: MethodCall, result: MethodChannel.Result) {
+        val query = call.argument<String>("query") ?: ""
+        try {
+            MegaRepository.refreshNodes(context, force = false)
+            val matches = MegaRepository.search(query)
+            val folders = matches.filter { it.isFolder }.sortedBy { it.name.lowercase() }.take(MAX_SEARCH_FOLDERS).map { folder ->
+                folderSummary(folder).apply { put("location", locationOf(folder)) }
+            }
+            val files = matches.filter { !it.isFolder && MegaRepository.isMedia(it.name) }
+                .sortedByDescending { it.modifiedTime ?: it.timestamp }
+                .take(MAX_SEARCH_FILES)
+                .map(::fileFields)
+            result.success(
+                hashMapOf(
+                    "handle" to "search",
+                    "name" to query,
+                    "isRoot" to false,
+                    "path" to emptyList<Any>(),
+                    "folders" to folders,
+                    "files" to files,
+                )
+            )
+        } catch (e: Exception) {
+            reportError(result, "search", e)
+        }
+    }
+
     private fun fileFields(node: MegaNode): Map<String, Any?> {
         val details = MegaRepository.getDetails(context, node.handle)
         return (details ?: emptyMap()) + hashMapOf(
@@ -165,5 +201,7 @@ class MegaHandler(private val context: Context) : MethodCallHandler {
 
     companion object {
         const val CHANNEL = "deckers.thibault/aves/mega"
+        private const val MAX_SEARCH_FOLDERS = 200
+        private const val MAX_SEARCH_FILES = 2000
     }
 }

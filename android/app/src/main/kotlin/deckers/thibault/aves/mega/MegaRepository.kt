@@ -219,6 +219,23 @@ object MegaRepository {
 
     fun getChildren(handle: String): List<MegaNode> = children[handle] ?: emptyList()
 
+    // nodes in the cloud drive (not in the rubbish bin or inbox) whose name contains the query, ignoring case
+    fun search(query: String): List<MegaNode> {
+        val needle = query.trim().lowercase()
+        if (needle.isEmpty()) return emptyList()
+        val root = rootHandle() ?: return emptyList()
+        val inDrive = HashMap<String, Boolean>()
+        fun isInDrive(node: MegaNode): Boolean {
+            inDrive[node.handle]?.let { return it }
+            val parent = node.parent?.let { nodes[it] }
+            val result = node.handle == root || (parent != null && isInDrive(parent))
+            inDrive[node.handle] = result
+            return result
+        }
+        return nodes.values.filter { it.type == MegaNode.TYPE_FILE || it.type == MegaNode.TYPE_FOLDER }
+            .filter { it.name.lowercase().contains(needle) && isInDrive(it) }
+    }
+
     // path of folder names from the cloud drive root, e.g. `Cloud Drive/Photos/2024`
     fun pathOf(handle: String): List<MegaNode> {
         val path = ArrayList<MegaNode>()
