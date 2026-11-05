@@ -195,9 +195,12 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
       if (!mounted) return;
       final show = showMemoriesBar;
       if (show != _lastShowMemoriesBar) {
+        _lastShowMemoriesBar = show;
         setState(() {});
-        _updateAppBarHeight();
       }
+      // always sync the height used by the grid to find the item under a long press,
+      // as the bar may already have been rebuilt with the memories by another path
+      _updateAppBarHeight();
     });
   }
 
@@ -329,8 +332,7 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
   // memories and quick filters, which scroll away under the title row when the bar is pinned
   double _getHeaderHeight() {
     double height = 0;
-    _lastShowMemoriesBar = showMemoriesBar;
-    if (_lastShowMemoriesBar) {
+    if (showMemoriesBar) {
       height += MemoriesBar.preferredHeight;
     }
     if (showQuickFilterBar) {

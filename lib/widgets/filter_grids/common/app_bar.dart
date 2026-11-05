@@ -131,6 +131,16 @@ class _FilterGridAppBarState<T extends CollectionFilter, CSAD extends ChipSetAct
   }
 
   @override
+  void didUpdateWidget(covariant FilterGridAppBar<T, CSAD> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((oldWidget.header == null) != (widget.header == null) || oldWidget.headerHeight != widget.headerHeight) {
+      // keep the height used by the grid to find the item under a long press in sync,
+      // e.g. when the album shortcuts are hidden inside an album group
+      WidgetsBinding.instance.addPostFrameCallback((_) => _updateAppBarHeight());
+    }
+  }
+
+  @override
   void dispose() {
     _queryBarFocusNode.dispose();
     _queryFocusRequestNotifier.removeListener(_onQueryFocusRequest);
