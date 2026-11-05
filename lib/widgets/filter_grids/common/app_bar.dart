@@ -185,9 +185,10 @@ class _FilterGridAppBarState<T extends CollectionFilter, CSAD extends ChipSetAct
             ),
             title: _buildAppBarTitle(isSelecting),
             actions: (context, maxWidth) => useTvLayout ? [] : actionsBuilder(context, appMode, selection, actionDelegate),
+            header: widget.header,
+            headerHeight: widget.headerHeight,
             bottom: Column(
               children: [
-                ?widget.header,
                 if (useTvLayout)
                   SizedBox(
                     height: CaptionedButton.getTelevisionButtonHeight(context),
