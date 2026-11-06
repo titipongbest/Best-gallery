@@ -84,6 +84,22 @@ class VideoActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAwareMix
     }
   }
 
+  // date of the captured frame, derived from the source video date and the frame position,
+  // falling back to the source date taken or modified date when the video is not catalogued
+  // returns the date in millis (UTC wall clock when the offset is known) and the time zone offset
+  (int?, int?) _frameDate(AvesEntry entry, int positionMillis) {
+    final offsetMillis = positionMillis > 0 ? positionMillis : 0;
+    final catalogDateMillis = entry.catalogDateMillis;
+    if (catalogDateMillis != null && catalogDateMillis > 0) {
+      return (catalogDateMillis + offsetMillis, entry.catalogTimeZoneOffsetMinutes);
+    }
+    final sourceDateMillis = [entry.sourceDateTakenMillis, entry.dateModifiedMillis].firstWhereOrNull((v) => v != null && v > 0);
+    if (sourceDateMillis != null) {
+      return (sourceDateMillis + offsetMillis, null);
+    }
+    return (null, null);
+  }
+
   Future<void> _captureFrame(BuildContext context, AvesEntry entry, AvesVideoController controller) async {
     final destinationAlbum = androidFileUtils.avesVideoCapturesPath;
     final positionMillis = controller.currentPosition;
@@ -97,10 +113,11 @@ class VideoActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAwareMix
 
       final rotationDegrees = entry.rotationDegrees;
       final latLng = entry.latLng;
+      final (frameDateMillis, frameTimeZoneOffsetMinutes) = _frameDate(entry, positionMillis);
       final exif = <String, num>{
         if (rotationDegrees != 0) 'rotationDegrees': rotationDegrees,
-        'dateTimeMillis': ?entry.catalogDateMillis,
-        'timeZoneOffsetMinutes': ?entry.catalogTimeZoneOffsetMinutes,
+        'dateTimeMillis': ?frameDateMillis,
+        'timeZoneOffsetMinutes': ?frameTimeZoneOffsetMinutes,
         if (latLng != null) ...{
           'latitude': latLng.latitude,
           'longitude': latLng.longitude,
