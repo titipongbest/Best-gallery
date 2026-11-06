@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main", "claude/rebrand-best-gallery", "claude/mega-cloud" ]
+    branches: [ "main", "claude/rebrand-best-gallery", "claude/mega-cloud", "claude/fix-select-headers" ]
   workflow_dispatch:
 
 # Declare default permissions as read only.

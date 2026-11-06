@@ -195,9 +195,12 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
       if (!mounted) return;
       final show = showMemoriesBar;
       if (show != _lastShowMemoriesBar) {
+        _lastShowMemoriesBar = show;
         setState(() {});
-        _updateAppBarHeight();
       }
+      // always sync the height used by the grid to find the item under a long press,
+      // as the bar may already have been rebuilt with the memories by another path
+      _updateAppBarHeight();
     });
   }
 
@@ -250,14 +253,21 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
                         ),
                         title: _buildAppBarTitle(isSelecting),
                         actions: (context, maxWidth) => useTvLayout ? [] : _buildActions(context, selection, maxWidth),
+                        header: showMemoriesBar || showQuickFilterBar
+                            ? Column(
+                                children: [
+                                  if (showMemoriesBar)
+                                    MemoriesBar(
+                                      collection: collection,
+                                      memories: _memories,
+                                    ),
+                                  if (showQuickFilterBar) QuickFilterBar(collection: collection),
+                                ],
+                              )
+                            : null,
+                        headerHeight: _getHeaderHeight(),
                         bottom: Column(
                           children: [
-                            if (showMemoriesBar)
-                              MemoriesBar(
-                                collection: collection,
-                                memories: _memories,
-                              ),
-                            if (showQuickFilterBar) QuickFilterBar(collection: collection),
                             if (useTvLayout)
                               SizedBox(
                                 height: CaptionedButton.getTelevisionButtonHeight(context),
@@ -319,16 +329,22 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
   // `read` context because it can be called outside of Widget `build`
   static bool _showQueryLine(BuildContext context) => context.read<Query?>()?.enabled ?? false;
 
-  double _getAppBarContentHeight(BuildContext context) {
-    final textScaler = MediaQuery.textScalerOf(context);
-    double height = textScaler.scale(kToolbarHeight);
-    _lastShowMemoriesBar = showMemoriesBar;
-    if (_lastShowMemoriesBar) {
+  // memories and quick filters, which scroll away under the title row when the bar is pinned
+  double _getHeaderHeight() {
+    double height = 0;
+    if (showMemoriesBar) {
       height += MemoriesBar.preferredHeight;
     }
     if (showQuickFilterBar) {
       height += QuickFilterBar.preferredHeight;
     }
+    return height;
+  }
+
+  double _getAppBarContentHeight(BuildContext context) {
+    final textScaler = MediaQuery.textScalerOf(context);
+    double height = textScaler.scale(kToolbarHeight);
+    height += _getHeaderHeight();
     if (settings.useTvLayout) {
       height += CaptionedButton.getTelevisionButtonHeight(context);
     }

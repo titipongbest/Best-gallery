@@ -20,6 +20,11 @@ class const AvesAppBar({
   required final Widget? leading,
   required final Widget title,
   required final List<Widget> Function(BuildContext context, double maxWidth) actions,
+  // shown right below the title row, and included in `contentHeight`
+  // when the bar is pinned (e.g. in selection mode), it scrolls away under the title row
+  // instead of popping back in view over the content
+  final Widget? header,
+  final double headerHeight = 0,
   final Widget? bottom,
   final Object? transitionKey,
 }) extends StatelessWidget {
@@ -78,12 +83,16 @@ class const AvesAppBar({
       }
     }
 
+    final _header = header;
+    final collapsibleHeight = pinned && _header != null ? headerHeight : 0.0;
+    final maxHeight = MediaQuery.paddingOf(context).top + appBarHeightForContentHeight(contentHeight);
     return SliverPersistentHeader(
       floating: floating && !useTvLayout,
       pinned: pinned,
       delegate: _SliverAppBarDelegate(
-        height: MediaQuery.paddingOf(context).top + appBarHeightForContentHeight(contentHeight),
-        child: DirectionalSafeArea(
+        maxHeight: maxHeight,
+        minHeight: maxHeight - collapsibleHeight,
+        builder: (context, shrinkOffset) => DirectionalSafeArea(
           start: !useTvLayout,
           bottom: false,
           child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -129,6 +138,18 @@ class const AvesAppBar({
                         ],
                       ),
                     ),
+                    if (_header != null)
+                      ClipRect(
+                        child: SizedBox(
+                          height: collapsibleHeight > 0 ? (headerHeight - shrinkOffset).clamp(0.0, headerHeight) : headerHeight,
+                          child: OverflowBox(
+                            alignment: Alignment.bottomCenter,
+                            minHeight: headerHeight,
+                            maxHeight: headerHeight,
+                            child: _header,
+                          ),
+                        ),
+                      ),
                     ?bottom,
                   ],
                 ),
@@ -176,17 +197,18 @@ class const AvesAppBar({
 }
 
 class const _SliverAppBarDelegate({
-  required final double height,
-  required final Widget child,
+  required final double maxHeight,
+  required final double minHeight,
+  required final Widget Function(BuildContext context, double shrinkOffset) builder,
 }) extends SliverPersistentHeaderDelegate {
   @override
-  double get minExtent => height;
+  double get minExtent => minHeight;
 
   @override
-  double get maxExtent => height;
+  double get maxExtent => maxHeight;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => child;
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => builder(context, shrinkOffset);
 
   @override
   bool shouldRebuild(covariant _SliverAppBarDelegate oldDelegate) => true;
