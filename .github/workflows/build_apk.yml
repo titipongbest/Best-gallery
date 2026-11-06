@@ -1,0 +1,70 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+# Declare default permissions as read only.
+permissions:
+  contents: read
+
+jobs:
+  build_apk:
+    name: Build Best gallery APK
+    runs-on: ubuntu-latest
+    steps:
+      # Building relies on the Android Gradle plugin,
+      # which requires a modern Java version (not the default one).
+      - name: Set up JDK for Android Gradle plugin
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Get Flutter packages
+        run: |
+          ./flutterw doctor -v
+          scripts/apply_flavor_izzy.sh
+
+      - name: Generate app localizations
+        run: ./flutterw gen-l10n
+
+      # Uses the release keystore when the `KEY_JKS` (base64 of the .jks file) and `KEYSTORE_PASSWORD` secrets are set,
+      # otherwise the APK is signed with the runner debug key. The key alias is `bestgallery`
+      # and the key password is the same as the keystore password.
+      - name: Build APK
+        run: |
+          NDK_VERSION=28.2.13676358
+          export ANDROID_NDK=$ANDROID_SDK_ROOT/ndk/$NDK_VERSION
+          export ANDROID_NDK_HOME=$ANDROID_NDK
+          export ANDROID_NDK_ROOT=$ANDROID_NDK
+          if [ -n "$KEY_JKS" ]; then
+            echo "$KEY_JKS" | base64 -d > "$AVES_STORE_FILE"
+            export AVES_STORE_PASSWORD="$KEYSTORE_PASSWORD"
+            export AVES_KEY_PASSWORD="$KEYSTORE_PASSWORD"
+          else
+            echo "No release keystore configured, signing with debug key"
+            unset AVES_STORE_FILE AVES_STORE_PASSWORD AVES_KEY_ALIAS AVES_KEY_PASSWORD
+          fi
+          export AVES_GOOGLE_API_KEY="NONE"
+          ./flutterw build apk -t lib/main_izzy.dart --flavor izzy
+          mkdir outputs
+          cp build/app/outputs/flutter-apk/app-izzy-release.apk outputs/best-gallery.apk
+          rm -f "$AVES_STORE_FILE"
+        env:
+          KEY_JKS: ${{ secrets.KEY_JKS }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          AVES_STORE_FILE: ${{ github.workspace }}/key.jks
+          AVES_KEY_ALIAS: bestgallery
+
+      - name: Upload APK
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: best-gallery-apk
+          path: outputs/best-gallery.apk
