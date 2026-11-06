@@ -19,7 +19,9 @@ import 'package:aves/widgets/aves_app.dart';
 import 'package:aves/widgets/collection/entry_set_action_delegate.dart';
 import 'package:aves/widgets/collection/filter_bar.dart';
 import 'package:aves/widgets/collection/layout_bar.dart';
+import 'package:aves/widgets/collection/memories_bar.dart';
 import 'package:aves/widgets/collection/query_bar.dart';
+import 'package:aves/widgets/collection/quick_filter_bar.dart';
 import 'package:aves/widgets/common/action_controls/quick_choosers/move_button.dart';
 import 'package:aves/widgets/common/action_controls/quick_choosers/rate_button.dart';
 import 'package:aves/widgets/common/action_controls/quick_choosers/tag_button.dart';
@@ -97,6 +99,28 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
 
   bool get showFilterBar => collection.visibleFilters.isNotEmpty;
 
+  String? _memoriesKey;
+  List<Memory> _memoriesCache = const [];
+
+  // photos taken on this day in previous years, shown on the unfiltered collection only
+  List<Memory> get _memories {
+    if (collection.filters.isNotEmpty || settings.useTvLayout) return const [];
+    final entries = collection.sortedEntries;
+    final now = DateTime.now();
+    final key = '${entries.length}-${now.year}-${now.month}-${now.day}';
+    if (key != _memoriesKey) {
+      _memoriesKey = key;
+      _memoriesCache = Memory.compute(entries, now);
+    }
+    return _memoriesCache;
+  }
+
+  bool get showMemoriesBar => _memories.isNotEmpty;
+
+  bool get showQuickFilterBar => collection.filters.isEmpty && !settings.useTvLayout;
+
+  bool _lastShowMemoriesBar = false;
+
   static const _trashSelectionQuickActions = <EntrySetAction>[
     .delete,
     .restore,
@@ -158,10 +182,26 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
 
   void _registerWidget(CollectionAppBar widget) {
     widget.collection.filterChangeNotifier.addListener(_onFilterChanged);
+    widget.collection.addListener(_onCollectionChanged);
   }
 
   void _unregisterWidget(CollectionAppBar widget) {
     widget.collection.filterChangeNotifier.removeListener(_onFilterChanged);
+    widget.collection.removeListener(_onCollectionChanged);
+  }
+
+  void _onCollectionChanged() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final show = showMemoriesBar;
+      if (show != _lastShowMemoriesBar) {
+        _lastShowMemoriesBar = show;
+        setState(() {});
+      }
+      // always sync the height used by the grid to find the item under a long press,
+      // as the bar may already have been rebuilt with the memories by another path
+      _updateAppBarHeight();
+    });
   }
 
   @override
@@ -205,12 +245,27 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
                       return AvesAppBar(
                         contentHeight: _getAppBarContentHeight(context),
                         pinned: context.select<Selection<AvesEntry>, bool>((selection) => selection.isSelecting),
+                        // keep the memories and quick filters at the top, instead of covering the grid on every scroll up
+                        floating: !showMemoriesBar && !showQuickFilterBar,
                         leading: _buildAppBarLeading(
                           hasDrawer: appMode.canNavigate,
                           isSelecting: isSelecting,
                         ),
                         title: _buildAppBarTitle(isSelecting),
                         actions: (context, maxWidth) => useTvLayout ? [] : _buildActions(context, selection, maxWidth),
+                        header: showMemoriesBar || showQuickFilterBar
+                            ? Column(
+                                children: [
+                                  if (showMemoriesBar)
+                                    MemoriesBar(
+                                      collection: collection,
+                                      memories: _memories,
+                                    ),
+                                  if (showQuickFilterBar) QuickFilterBar(collection: collection),
+                                ],
+                              )
+                            : null,
+                        headerHeight: _getHeaderHeight(),
                         bottom: Column(
                           children: [
                             if (useTvLayout)
@@ -274,9 +329,22 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
   // `read` context because it can be called outside of Widget `build`
   static bool _showQueryLine(BuildContext context) => context.read<Query?>()?.enabled ?? false;
 
+  // memories and quick filters, which scroll away under the title row when the bar is pinned
+  double _getHeaderHeight() {
+    double height = 0;
+    if (showMemoriesBar) {
+      height += MemoriesBar.preferredHeight;
+    }
+    if (showQuickFilterBar) {
+      height += QuickFilterBar.preferredHeight;
+    }
+    return height;
+  }
+
   double _getAppBarContentHeight(BuildContext context) {
     final textScaler = MediaQuery.textScalerOf(context);
     double height = textScaler.scale(kToolbarHeight);
+    height += _getHeaderHeight();
     if (settings.useTvLayout) {
       height += CaptionedButton.getTelevisionButtonHeight(context);
     }
@@ -367,14 +435,16 @@ class _CollectionAppBarState extends State<CollectionAppBar> with RouteAware, Si
     final isSelecting = selection.isSelecting;
     final selectedItemCount = selection.selectedItemCount;
 
-    bool isVisible(EntrySetAction action) => _actionDelegate.isVisible(
-      action,
-      appMode: appMode,
-      isSelecting: isSelecting,
-      itemCount: collection.entryCount,
-      selectedItemCount: selectedItemCount,
-      isTrash: isTrash,
-    );
+    bool isVisible(EntrySetAction action) =>
+        EntrySetActionDelegate.isAllowedFor(action, collection.source) &&
+        _actionDelegate.isVisible(
+          action,
+          appMode: appMode,
+          isSelecting: isSelecting,
+          itemCount: collection.entryCount,
+          selectedItemCount: selectedItemCount,
+          isTrash: isTrash,
+        );
     bool canApply(EntrySetAction action) => _actionDelegate.canApply(
       action,
       isSelecting: isSelecting,

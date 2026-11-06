@@ -1,3 +1,4 @@
+import 'package:aves/theme/colors.dart';
 import 'package:aves/theme/styles.dart';
 import 'package:aves/widgets/aves_app.dart';
 import 'package:aves/widgets/settings/language/locales.dart';
@@ -55,15 +56,35 @@ class Themes {
       cardColor: _schemeCardLayer(colors),
       colorScheme: colors,
       dividerColor: colors.outlineVariant,
+      shadowColor: const Color(0xff9a6410),
       scaffoldBackgroundColor: _schemeFirstLayer(colors),
       // TYPOGRAPHY & ICONOGRAPHY
       iconTheme: _iconTheme(colors),
       typography: _typography,
       // COMPONENT THEMES
       bottomNavigationBarTheme: _bottomNavigationBarTheme(colors),
+      cardTheme: const CardThemeData(
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
+      ),
       checkboxTheme: _checkboxTheme(colors),
+      chipTheme: const ChipThemeData(shape: StadiumBorder()),
+      elevatedButtonTheme: ElevatedButtonThemeData(style: ElevatedButton.styleFrom(shape: const StadiumBorder())),
+      filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(shape: const StadiumBorder())),
+      outlinedButtonTheme: OutlinedButtonThemeData(style: OutlinedButton.styleFrom(shape: const StadiumBorder())),
       drawerTheme: _drawerTheme(colors),
       floatingActionButtonTheme: _floatingActionButtonTheme(colors),
+      navigationBarTheme: NavigationBarThemeData(
+        indicatorColor: colors.secondary,
+        indicatorShape: const StadiumBorder(),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return _iconTheme(colors).copyWith(color: selected ? colors.onSecondary : _unselectedWidgetColor(colors));
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          return TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.primary);
+        }),
+      ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: _schemeFirstLayer(colors),
         selectedIconTheme: IconThemeData(color: colors.primary),
@@ -112,6 +133,7 @@ class Themes {
   static PopupMenuThemeData _popupMenuTheme(ColorScheme colors, TextTheme textTheme) {
     return PopupMenuThemeData(
       color: _schemeSecondLayer(colors),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(18))),
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
         // adapted from M3 defaults
         final TextStyle style = textTheme.labelLarge!;
@@ -128,6 +150,8 @@ class Themes {
     return FloatingActionButtonThemeData(
       foregroundColor: colors.onPrimary,
       backgroundColor: colors.primary,
+      elevation: 8,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
     );
   }
 
@@ -163,6 +187,7 @@ class Themes {
   static SnackBarThemeData _snackBarTheme(ColorScheme colors) => SnackBarThemeData(
     actionTextColor: colors.primary,
     behavior: SnackBarBehavior.floating,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
   );
 
   static const _tooltipTheme = TooltipThemeData(
@@ -171,22 +196,40 @@ class Themes {
 
   // light
 
-  static final _lightThemeTypo = _typography.black;
-  static final _lightTitleColor = _lightThemeTypo.titleMedium!.color!;
-  static final _lightLabelColor = _lightThemeTypo.labelMedium!.color!;
-  static const _lightActionIconColor = Color(0xAA000000);
-  static const _lightOnSurface = Colors.black;
+  // Best gallery "Golden Frame" palette: cream surfaces, deep brown text, amber gold accents
+  static const _lightInk = Color(0xff2e2210);
+  static const _lightThemeTypoBodyColor = Color(0xdd2e2210);
+  static final _lightThemeTypo = _typography.black.apply(
+    bodyColor: _lightThemeTypoBodyColor,
+    displayColor: _lightThemeTypoBodyColor,
+  );
+  static const _lightTitleColor = Color(0xff2e2210);
+  static const _lightLabelColor = _lightThemeTypoBodyColor;
+  static const _lightActionIconColor = Color(0xffb8730a);
+  static const _lightOnSurface = _lightInk;
 
   static ThemeData lightTheme(Color accentColor, bool deviceInitialized, KnownLocale locale) {
     final onAccent = ColorUtils.textColorOn(accentColor);
+    final isDefault = accentColor == AvesColorsData.defaultAccent;
     final colors = ColorScheme.fromSeed(
       seedColor: accentColor,
       brightness: Brightness.light,
       primary: accentColor,
       onPrimary: onAccent,
-      secondary: accentColor,
-      onSecondary: onAccent,
+      secondary: isDefault ? AvesColorsData.defaultSecondary : accentColor,
+      onSecondary: isDefault ? const Color(0xff2e2210) : onAccent,
+      tertiary: isDefault ? AvesColorsData.defaultTertiary : null,
+      onTertiary: isDefault ? Colors.white : null,
       onSurface: _lightOnSurface,
+      onSurfaceVariant: const Color(0xff6b5838),
+      surface: const Color(0xfffdf9f1),
+      surfaceContainerLowest: const Color(0xffffffff),
+      surfaceContainerLow: const Color(0xfffffdf8),
+      surfaceContainer: const Color(0xfff8f0e0),
+      surfaceContainerHigh: const Color(0xfff3e8d2),
+      surfaceContainerHighest: const Color(0xffeddfc2),
+      outline: const Color(0xffa8916a),
+      outlineVariant: const Color(0xffead9b5),
     );
     final textTheme = _lightThemeTypo;
     return _baseTheme(colors, deviceInitialized).copyWith(
@@ -204,6 +247,7 @@ class Themes {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: _schemeSecondLayer(colors),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(28))),
         titleTextStyle: AStyles.pageTitleTextStyle(locale).copyWith(color: _lightTitleColor),
       ),
       listTileTheme: _listTileTheme.copyWith(
@@ -229,14 +273,25 @@ class Themes {
 
   static ColorScheme _darkColorScheme(Color accentColor) {
     final onAccent = ColorUtils.textColorOn(accentColor);
+    final isDefault = accentColor == AvesColorsData.defaultDarkAccent;
     final colors = ColorScheme.fromSeed(
       seedColor: accentColor,
       brightness: Brightness.dark,
       primary: accentColor,
       onPrimary: onAccent,
-      secondary: accentColor,
-      onSecondary: onAccent,
+      secondary: isDefault ? AvesColorsData.defaultDarkSecondary : accentColor,
+      onSecondary: isDefault ? const Color(0xff17130c) : onAccent,
+      tertiary: isDefault ? AvesColorsData.defaultDarkTertiary : null,
+      onTertiary: isDefault ? const Color(0xff17130c) : null,
       onSurface: _darkOnSurface,
+      // deep warm brown surfaces
+      surface: const Color(0xff17130c),
+      surfaceContainerLowest: const Color(0xff120f09),
+      surfaceContainerLow: const Color(0xff1d1810),
+      surfaceContainer: const Color(0xff241e14),
+      surfaceContainerHigh: const Color(0xff2d2619),
+      surfaceContainerHighest: const Color(0xff372e1f),
+      outlineVariant: const Color(0xff4a3e28),
     );
     return colors;
   }
@@ -258,6 +313,7 @@ class Themes {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: _schemeSecondLayer(colors),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(28))),
         titleTextStyle: AStyles.pageTitleTextStyle(locale).copyWith(color: _darkTitleColor),
       ),
       listTileTheme: _listTileTheme,

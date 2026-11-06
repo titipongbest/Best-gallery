@@ -299,6 +299,10 @@ class MediaStoreSource extends CollectionSource {
 
     state = SourceState.loading;
 
+    // Best gallery: items deleted by other apps are not always reported with their own URI,
+    // so check all known items to remove the ones that no longer exist
+    await _removeObsoleteEntries();
+
     final changedUriDetails = changedUris.length < 5 ? ' (${changedUris.join(', ')})' : '';
     unawaited(reportService.log('$runtimeType refresh start for ${changedUris.length} uris$changedUriDetails'));
     final changedUriByContentId = Map.fromEntries(
@@ -405,17 +409,35 @@ class MediaStoreSource extends CollectionSource {
 
   void onStoreChanged(String? uri) {
     if (uri != null) _changedUris.add(uri);
-    if (_changedUris.isNotEmpty) {
-      _changeDebouncer(() async {
-        final todo = _changedUris.toSet();
-        _changedUris.clear();
-        final tempUris = await refreshUris(todo);
-        if (tempUris.isNotEmpty) {
-          _changedUris.addAll(tempUris);
-          onStoreChanged(null);
+    _changeDebouncer(() async {
+      final todo = _changedUris.toSet();
+      _changedUris.clear();
+      if (todo.isEmpty) {
+        // the change may be a deletion reported without a specific URI
+        if (canRefresh && _essentialLoader != null && isReady) {
+          await _removeObsoleteEntries();
         }
-      });
-    }
+        return;
+      }
+      final tempUris = await refreshUris(todo);
+      if (tempUris.isNotEmpty) {
+        _changedUris.addAll(tempUris);
+        onStoreChanged(null);
+      }
+    });
+  }
+
+  // removes entries whose content no longer exists in the Media Store,
+  // e.g. after being deleted by another app
+  Future<void> _removeObsoleteEntries() async {
+    final liveEntries = allEntries.where((entry) => !entry.trashed && entry.origin == EntryOrigins.mediaStoreContent).toSet();
+    final contentIds = liveEntries.map((entry) => entry.contentId).nonNulls.toList();
+    if (contentIds.isEmpty) return;
+    final obsoleteContentIds = (await mediaStoreService.checkObsoleteContentIds(contentIds)).toSet();
+    if (obsoleteContentIds.isEmpty) return;
+    final obsoleteUris = liveEntries.where((entry) => obsoleteContentIds.contains(entry.contentId)).map((entry) => entry.uri).toSet();
+    unawaited(reportService.log('$runtimeType remove ${obsoleteUris.length} obsolete entries'));
+    await removeEntries(obsoleteUris, includeTrash: false);
   }
 
   @override

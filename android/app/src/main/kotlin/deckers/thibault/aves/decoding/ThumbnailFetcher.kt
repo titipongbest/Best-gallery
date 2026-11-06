@@ -2,6 +2,7 @@ package deckers.thibault.aves.decoding
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
@@ -16,6 +17,9 @@ import com.bumptech.glide.signature.ObjectKey
 import deckers.thibault.aves.channel.streams.darttoplatform.ByteSink
 import deckers.thibault.aves.glide.AvesAppGlideModule
 import deckers.thibault.aves.glide.MultiPageImage
+import deckers.thibault.aves.mega.MegaContentProvider
+import deckers.thibault.aves.mega.MegaNode
+import deckers.thibault.aves.mega.MegaRepository
 import deckers.thibault.aves.model.ContentAddress
 import deckers.thibault.aves.model.VideoThumbnailMethod
 import deckers.thibault.aves.storage.StorageUtils
@@ -68,7 +72,10 @@ class ThumbnailFetcher internal constructor(
         var exception: Exception? = null
 
         try {
-            if (isLowQualityFetch() && !isCustomFetch() && !isFlipped) {
+            if (MegaRepository.isMegaUri(context, uri)) {
+                // MEGA provides pre-generated thumbnails & previews, already oriented
+                bitmap = getByMega()
+            } else if (isLowQualityFetch() && !isCustomFetch() && !isFlipped) {
                 // Fetch low quality thumbnails when size is not specified.
                 // As of Android 11, the Media Store content resolver may return a thumbnail
                 // that is automatically rotated according to EXIF orientation, but not flipped,
@@ -140,6 +147,19 @@ class ThumbnailFetcher internal constructor(
             bitmap = applyExifOrientation(context, bitmap, rotationDegrees, isFlipped)
         }
         return bitmap
+    }
+
+    private fun getByMega(): Bitmap? {
+        val handle = MegaRepository.handleFromUri(uri) ?: return null
+        val node = MegaRepository.getNode(context, handle) ?: return null
+        val preferThumbnail = maxOf(width, height) <= MegaContentProvider.THUMBNAIL_MAX_DIMENSION
+        val types = if (preferThumbnail) listOf(MegaNode.FA_THUMBNAIL, MegaNode.FA_PREVIEW) else listOf(MegaNode.FA_PREVIEW, MegaNode.FA_THUMBNAIL)
+        for (type in types) {
+            val bytes = MegaRepository.getCachedFileAttribute(context, node, type) ?: continue
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { return it }
+        }
+        // no pre-generated thumbnail: fall back to decoding the full file
+        return null
     }
 
     fun getByMediaStore(): Bitmap? {

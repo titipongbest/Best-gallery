@@ -5,12 +5,10 @@ import 'package:flutter/widgets.dart';
 
 class AStyles {
   static TextStyle _baseTitleStyle(KnownLocale? locale) {
-    final supportSmallCaps = locale?.supportSmallCaps ?? true;
-    final supportLetterSpacing = locale?.supportLetterSpacing ?? true;
-    return TextStyle(
-      fontWeight: supportSmallCaps ? .w300 : .normal,
-      letterSpacing: supportSmallCaps && supportLetterSpacing ? 1 : 0,
-      fontFeatures: supportSmallCaps ? const [FontFeature.enable('smcp')] : [],
+    // Best gallery: bold titles, without small caps
+    return const TextStyle(
+      fontWeight: .w700,
+      letterSpacing: 0,
     );
   }
 
@@ -23,8 +21,7 @@ class AStyles {
 
   static TextStyle pageTitleTextStyle(KnownLocale locale) {
     return _baseTitleStyle(locale).copyWith(
-      fontSize: 20,
-      fontWeight: .normal,
+      fontSize: 21,
     );
   }
 

@@ -186,7 +186,7 @@
     "videoActionReplay10": "Превъртане 10 секунди назад",
     "saveCopyButtonLabel": "ЗАПАЗВАНЕ НА КОПИЕ",
     "videoActionShowNextFrame": "Покажи следващия кадър",
-    "welcomeMessage": "Добре дошли в Aves",
+    "welcomeMessage": "Добре дошли в Best gallery",
     "welcomeOptional": "Опционално",
     "itemCount": "{count, plural, =1{{count} елемент} few{{count} елемента} other{{count} елемента}}",
     "@itemCount": {
@@ -655,7 +655,7 @@
     "settingsNavigationDrawerTile": "Навигационно меню",
     "settingsNavigationDrawerEditorPageTitle": "Навигационно меню",
     "settingsNavigationDrawerBanner": "Докоснете и задръжте, за да преместите и пренаредите елементи от менюто.",
-    "appName": "Aves",
+    "appName": "Best gallery",
     "nextTooltip": "Следващ",
     "entryInfoActionEditTitleDescription": "Променете заглавието и описанието",
     "albumTierVaults": "Трезори",

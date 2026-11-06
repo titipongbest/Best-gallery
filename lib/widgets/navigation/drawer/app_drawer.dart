@@ -1,3 +1,5 @@
+import 'package:aves/model/brand.dart';
+import 'package:aves/model/device.dart';
 import 'package:aves/model/filters/container/album_group.dart';
 import 'package:aves/model/filters/covered/stored_album.dart';
 import 'package:aves/model/filters/trash.dart';
@@ -21,6 +23,7 @@ import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/common/extensions/media_query.dart';
 import 'package:aves/widgets/common/identity/aves_logo.dart';
 import 'package:aves/widgets/debug/app_debug_page.dart';
+import 'package:aves/widgets/dialogs/aves_dialog.dart';
 import 'package:aves/widgets/explorer/explorer_page.dart';
 import 'package:aves/widgets/filter_grids/albums_page.dart';
 import 'package:aves/widgets/filter_grids/countries_page.dart';
@@ -32,6 +35,7 @@ import 'package:aves/widgets/navigation/drawer/page_nav_tile.dart';
 import 'package:aves/widgets/navigation/drawer/tile.dart';
 import 'package:aves/widgets/navigation/nav_item.dart';
 import 'package:aves/widgets/settings/settings_page.dart';
+import 'package:aves/widgets/mega/mega_page.dart';
 import 'package:aves_model/aves_model.dart';
 import 'package:aves_utils/aves_utils.dart';
 import 'package:collection/collection.dart';
@@ -122,6 +126,9 @@ class _AppDrawerState extends State<AppDrawer> with WidgetsBindingObserver {
       ..._buildTypeLinks(),
       _buildAlbumLinks(context),
       ..._buildPageLinks(context),
+      const Divider(),
+      megaTile(context),
+      igRenamerTile(context),
       if (settings.enableBin) ...[
         const Divider(),
         binTile(context),
@@ -221,6 +228,14 @@ class _AppDrawerState extends State<AppDrawer> with WidgetsBindingObserver {
                       ],
                     ),
                   ],
+                ),
+              ),
+              Text(
+                'v${device.packageVersion} · ${Brand.refineCredit}',
+                style: TextStyle(
+                  color: onPrimary.withValues(alpha: .85),
+                  fontSize: 12,
+                  letterSpacing: .6,
                 ),
               ),
               const SizedBox(height: 8),
@@ -400,6 +415,43 @@ class _AppDrawerState extends State<AppDrawer> with WidgetsBindingObserver {
         );
       }),
     ];
+  }
+
+  // Best gallery: MEGA cloud drive
+  Widget megaTile(BuildContext context) {
+    return ListTile(
+      key: const Key('drawer-mega'),
+      leading: const Icon(AIcons.cloud),
+      title: Text(context.l10n.megaPageTitle),
+      onTap: () async {
+        Navigator.maybeOf(context)?.pop();
+        await Future.pause(ADurations.drawerTransitionLoose);
+        await Navigator.maybeOf(context)?.push(
+          MaterialPageRoute(
+            settings: const RouteSettings(name: MegaPage.routeName),
+            builder: (_) => const MegaPage(),
+          ),
+        );
+      },
+    );
+  }
+
+  // Best gallery: shortcut to the IG ID Renamer app installed on the device
+  static const _igRenamerPackage = 'com.example.igrenamer';
+
+  Widget igRenamerTile(BuildContext context) {
+    return ListTile(
+      key: const Key('drawer-ig-renamer'),
+      leading: const Icon(AIcons.rename),
+      title: const Text('IG ID Renamer'),
+      trailing: const Icon(AIcons.openOutside, size: 18),
+      onTap: () async {
+        final launched = await appService.launchApp(_igRenamerPackage);
+        if (!launched && context.mounted) {
+          await showNoMatchingAppDialog(context);
+        }
+      },
+    );
   }
 
   Widget binTile(BuildContext context) {

@@ -68,7 +68,7 @@ class ImageOpStreamHandler(private val context: Context, private val arguments: 
                 result["success"] = false
                 getProvider(context, uri)?.let { provider ->
                     try {
-                        provider.deleteSingle(context, contentAddress)
+                        result["wiped"] = provider.deleteSingle(context, contentAddress)
                         result["success"] = true
                     } catch (e: Exception) {
                         Log.w(LOG_TAG, "failed to delete entry for $contentAddress", e)

@@ -1,15 +1,19 @@
 import 'package:aves/model/filters/container/album_group.dart';
 import 'package:aves/model/filters/container/dynamic_album.dart';
+import 'package:aves/model/filters/favourite.dart';
 import 'package:aves/model/filters/filters.dart';
+import 'package:aves/model/filters/mime.dart';
 import 'package:aves/model/grouping/common.dart';
 import 'package:aves/model/settings/defaults.dart';
 import 'package:aves/widgets/collection/collection_page.dart';
+import 'package:aves/widgets/common/search/page.dart';
 import 'package:aves/widgets/explorer/explorer_page.dart';
 import 'package:aves/widgets/filter_grids/albums_page.dart';
 import 'package:aves/widgets/filter_grids/tags_page.dart';
 import 'package:aves/widgets/navigation/nav_item.dart';
 import 'package:aves_model/aves_model.dart';
 import 'package:aves_utils/aves_utils.dart';
+import 'package:collection/collection.dart';
 import 'package:synchronized/synchronized.dart';
 
 mixin NavigationSettings on SettingsAccess {
@@ -85,6 +89,32 @@ mixin NavigationSettings on SettingsAccess {
   set bottomNavigationActions(List<AvesNavItem>? newValue) => set(SettingKeys.bottomNavigationActionsKey, newValue?.map((v) => v.toJson()).toList());
 
   bool get enableBottomNavigationBar => bottomNavigationActions.length >= 2;
+
+  // Best gallery: devices still on a previous default bottom bar get the current default
+  void migrateBottomNavigationActions() {
+    final stored = getStringList(SettingKeys.bottomNavigationActionsKey);
+    if (stored == null) return;
+    final current = stored.map(AvesNavItem.fromJson).nonNulls.toList();
+    final previousDefaults = [
+      // before 2.0
+      [
+        const AvesNavItem(route: CollectionPage.routeName),
+        AvesNavItem(route: CollectionPage.routeName, filters: {MimeFilter.video}),
+        AvesNavItem(route: CollectionPage.routeName, filters: {FavouriteFilter.instance}),
+        const AvesNavItem(route: AlbumListPage.routeName),
+      ],
+      // before 2.2.8, with albums before favourites
+      [
+        const AvesNavItem(route: CollectionPage.routeName),
+        const AvesNavItem(route: AlbumListPage.routeName),
+        const AvesNavItem(route: SearchPage.routeName),
+        AvesNavItem(route: CollectionPage.routeName, filters: {FavouriteFilter.instance}),
+      ],
+    ];
+    if (previousDefaults.any((v) => const ListEquality<AvesNavItem>().equals(current, v))) {
+      bottomNavigationActions = SettingsDefaults.bottomNavigationActions;
+    }
+  }
 
   // listening
 

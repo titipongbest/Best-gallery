@@ -1,0 +1,443 @@
+package deckers.thibault.aves.mega
+
+import android.content.Context
+import android.content.SharedPreferences
+import android.net.Uri
+import android.util.Log
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+import deckers.thibault.aves.model.EntryFields
+import deckers.thibault.aves.utils.LogUtils
+import org.json.JSONObject
+import deckers.thibault.aves.utils.MimeTypes
+import java.io.File
+import java.io.FileOutputStream
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+
+// App-wide access to the MEGA account: session persistence, node tree cache, file & thumbnail caches.
+object MegaRepository {
+    private val LOG_TAG = LogUtils.createTag<MegaRepository>()
+
+    private const val PREFS_NAME = "mega_session"
+    private const val PREF_SESSION = "session"
+
+    // node tree is refetched after this delay, or on explicit refresh
+    private const val NODES_TTL_MILLIS = 10 * 60 * 1000L
+
+    private val client = MegaClient()
+    private val lock = Any()
+    private var loadedSession = false
+
+    @Volatile
+    private var nodes: Map<String, MegaNode> = emptyMap()
+
+    @Volatile
+    private var children: Map<String, List<MegaNode>> = emptyMap()
+
+    @Volatile
+    private var nodesFetchedAt = 0L
+
+    private val refreshingNodes = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    // per-file locks, so that concurrent requests for the same file download it once
+    private val fileLocks = ConcurrentHashMap<String, Any>()
+
+    // session
+
+    private fun prefs(context: Context): SharedPreferences {
+        val masterKey = MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
+        return EncryptedSharedPreferences.create(
+            context,
+            PREFS_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+        )
+    }
+
+    private fun ensureSession(context: Context): MegaSession? {
+        synchronized(lock) {
+            if (!loadedSession) {
+                loadedSession = true
+                try {
+                    prefs(context).getString(PREF_SESSION, null)?.let { MegaSession.fromJson(it) }?.let { client.session = it }
+                } catch (e: Exception) {
+                    Log.w(LOG_TAG, "failed to restore MEGA session", e)
+                }
+            }
+            return client.session
+        }
+    }
+
+    fun currentEmail(context: Context): String? = ensureSession(context)?.email
+
+    fun login(context: Context, email: String, password: String, mfaCode: String?): MegaSession {
+        synchronized(lock) {
+            loadedSession = true
+            val session = client.login(email, password, mfaCode)
+            prefs(context).edit().putString(PREF_SESSION, session.toJson()).apply()
+            clearNodes(context)
+            return session
+        }
+    }
+
+    fun logout(context: Context) {
+        synchronized(lock) {
+            loadedSession = true
+            client.logout()
+            prefs(context).edit().clear().apply()
+            clearNodes(context)
+        }
+        clearCache(context)
+    }
+
+    private fun clearNodes(context: Context) {
+        File(File(context.filesDir, "mega"), "nodes.bin").delete()
+        nodes = emptyMap()
+        children = emptyMap()
+        nodesFetchedAt = 0
+    }
+
+    private fun requireSession(context: Context): MegaSession {
+        return ensureSession(context) ?: throw MegaApiException(MegaApiException.ESID, MegaApiException.describe(MegaApiException.ESID))
+    }
+
+    // run an API call, dropping the stored session if MEGA reports it as expired
+    private fun <T> withSession(context: Context, block: () -> T): T {
+        requireSession(context)
+        try {
+            return block()
+        } catch (e: MegaApiException) {
+            if (e.code == MegaApiException.ESID) {
+                synchronized(lock) {
+                    client.session = null
+                    prefs(context).edit().clear().apply()
+                    clearNodes(context)
+                }
+            }
+            throw e
+        }
+    }
+
+    // nodes
+
+    // The node tree is kept on disk, so that folders open without waiting for MEGA after the app restarts.
+    // A stale tree is refreshed in the background, and an explicit refresh waits for the latest tree.
+    fun refreshNodes(context: Context, force: Boolean) {
+        if (force) {
+            fetchAndStoreNodes(context)
+            return
+        }
+        if (nodes.isEmpty()) {
+            synchronized(lock) {
+                if (nodes.isEmpty()) loadNodesFromDisk(context)
+            }
+        }
+        if (nodes.isEmpty()) {
+            fetchAndStoreNodes(context)
+            return
+        }
+        if (System.currentTimeMillis() - nodesFetchedAt >= NODES_TTL_MILLIS && refreshingNodes.compareAndSet(false, true)) {
+            val appContext = context.applicationContext
+            Thread {
+                try {
+                    fetchAndStoreNodes(appContext)
+                } catch (e: Exception) {
+                    Log.w(LOG_TAG, "failed to refresh nodes in the background", e)
+                } finally {
+                    refreshingNodes.set(false)
+                }
+            }.start()
+        }
+    }
+
+    private fun fetchAndStoreNodes(context: Context) {
+        val now = System.currentTimeMillis()
+        // fetch without holding the lock, so that other calls (e.g. thumbnails) are not blocked meanwhile
+        val fetched = withSession(context) { client.fetchNodes() }
+        synchronized(lock) {
+            setNodes(fetched)
+            nodesFetchedAt = now
+            saveNodesToDisk(context)
+        }
+    }
+
+    private fun nodesFile(context: Context) = File(cacheRoot(context).apply { mkdirs() }, "nodes.bin")
+
+    // the tree holds file keys, so it is encrypted with the account master key,
+    // itself kept in encrypted preferences
+    private fun saveNodesToDisk(context: Context) {
+        val key = client.session?.masterKey ?: return
+        try {
+            val json = JSONObject().apply {
+                put("fetchedAt", nodesFetchedAt)
+                put("nodes", org.json.JSONArray().apply { nodes.values.forEach { put(it.toJson()) } })
+            }.toString().toByteArray(Charsets.UTF_8)
+            val iv = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+            val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, javax.crypto.spec.SecretKeySpec(key, "AES"), javax.crypto.spec.GCMParameterSpec(128, iv))
+            val file = nodesFile(context)
+            val temp = File(file.parentFile, "${file.name}.part")
+            temp.writeBytes(iv + cipher.doFinal(json))
+            if (!temp.renameTo(file)) temp.delete()
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "failed to save nodes", e)
+        }
+    }
+
+    private fun loadNodesFromDisk(context: Context) {
+        val session = ensureSession(context) ?: return
+        val file = nodesFile(context)
+        if (!file.exists()) return
+        try {
+            val bytes = file.readBytes()
+            val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(javax.crypto.Cipher.DECRYPT_MODE, javax.crypto.spec.SecretKeySpec(session.masterKey, "AES"), javax.crypto.spec.GCMParameterSpec(128, bytes, 0, 12))
+            val o = JSONObject(String(cipher.doFinal(bytes, 12, bytes.size - 12), Charsets.UTF_8))
+            val array = o.getJSONArray("nodes")
+            setNodes((0 until array.length()).map { MegaNode.fromJson(array.getJSONObject(it)) })
+            nodesFetchedAt = o.optLong("fetchedAt", 0)
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "failed to load saved nodes", e)
+            file.delete()
+        }
+    }
+
+    private fun setNodes(list: Collection<MegaNode>) {
+        nodes = list.associateBy { it.handle }
+        children = list.filter { it.parent != null }.groupBy { it.parent!! }
+    }
+
+    fun getNode(context: Context, handle: String): MegaNode? {
+        nodes[handle]?.let { return it }
+        refreshNodes(context, force = false)
+        return nodes[handle]
+    }
+
+    fun rootHandle(): String? = nodes.values.firstOrNull { it.type == MegaNode.TYPE_ROOT }?.handle
+
+    fun getChildren(handle: String): List<MegaNode> = children[handle] ?: emptyList()
+
+    // nodes in the cloud drive (not in the rubbish bin or inbox) whose name contains the query, ignoring case
+    fun search(query: String): List<MegaNode> {
+        val needle = query.trim().lowercase()
+        if (needle.isEmpty()) return emptyList()
+        val root = rootHandle() ?: return emptyList()
+        val inDrive = HashMap<String, Boolean>()
+        fun isInDrive(node: MegaNode): Boolean {
+            inDrive[node.handle]?.let { return it }
+            val parent = node.parent?.let { nodes[it] }
+            val result = node.handle == root || (parent != null && isInDrive(parent))
+            inDrive[node.handle] = result
+            return result
+        }
+        return nodes.values.filter { it.type == MegaNode.TYPE_FILE || it.type == MegaNode.TYPE_FOLDER }
+            .filter { it.name.lowercase().contains(needle) && isInDrive(it) }
+    }
+
+    // path of folder names from the cloud drive root, e.g. `Cloud Drive/Photos/2024`
+    fun pathOf(handle: String): List<MegaNode> {
+        val path = ArrayList<MegaNode>()
+        var current = nodes[handle]
+        var guard = 0
+        while (current != null && guard++ < 100) {
+            path.add(0, current)
+            current = current.parent?.let { nodes[it] }
+        }
+        return path
+    }
+
+    fun rename(context: Context, node: MegaNode, newName: String): MegaNode {
+        val renamed = withSession(context) { client.rename(node, newName) }
+        synchronized(lock) {
+            val updated = HashMap(nodes)
+            updated[renamed.handle] = renamed
+            setNodes(updated.values)
+            saveNodesToDisk(context)
+        }
+        return renamed
+    }
+
+    // file names in the same folder, to avoid duplicates (MEGA allows duplicate names)
+    fun siblingNames(node: MegaNode): Set<String> {
+        val parent = node.parent ?: return emptySet()
+        return getChildren(parent).filter { it.handle != node.handle }.map { it.name }.toSet()
+    }
+
+    // content
+
+    // downloaded files are kept until logout, in the app private storage:
+    // other apps cannot access it, the system does not clear it when space is low,
+    // and it is excluded from backups (cf `data_extraction_rules.xml` and `full_backup_content.xml`)
+    private fun cacheRoot(context: Context): File {
+        val root = File(context.filesDir, "mega")
+        if (!root.exists()) {
+            // files downloaded by previous versions, in the cache directory
+            val legacy = File(context.cacheDir, "mega")
+            if (legacy.exists() && !legacy.renameTo(root)) legacy.deleteRecursively()
+        }
+        return root
+    }
+    private fun filesDir(context: Context) = File(cacheRoot(context), "files").apply { mkdirs() }
+    private fun attrsDir(context: Context) = File(cacheRoot(context), "attrs").apply { mkdirs() }
+    private fun headsDir(context: Context) = File(cacheRoot(context), "heads").apply { mkdirs() }
+    private fun detailsDir(context: Context) = File(cacheRoot(context), "details").apply { mkdirs() }
+
+    // dimensions, orientation and dates read from files, so that folders open instantly the next time
+    private val detailIntKeys = listOf(EntryFields.WIDTH, EntryFields.HEIGHT, EntryFields.SOURCE_ROTATION_DEGREES)
+    private val detailLongKeys = listOf(EntryFields.SOURCE_DATE_TAKEN_MILLIS, EntryFields.DURATION_MILLIS)
+
+    fun getDetails(context: Context, handle: String): Map<String, Any>? {
+        val file = File(detailsDir(context), "$handle.json")
+        if (!file.exists()) return null
+        return try {
+            val o = JSONObject(file.readText())
+            val map = HashMap<String, Any>()
+            detailIntKeys.forEach { key -> if (o.has(key)) map[key] = o.getInt(key) }
+            detailLongKeys.forEach { key -> if (o.has(key)) map[key] = o.getLong(key) }
+            map
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "failed to read cached details for handle=$handle", e)
+            null
+        }
+    }
+
+    fun saveDetails(context: Context, handle: String, fields: Map<String, Any?>) {
+        try {
+            val o = JSONObject()
+            (detailIntKeys + detailLongKeys).forEach { key ->
+                when (val value = fields[key]) {
+                    is Number -> o.put(key, value.toLong())
+                }
+            }
+            File(detailsDir(context), "$handle.json").writeText(o.toString())
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "failed to cache details for handle=$handle", e)
+        }
+    }
+
+    // downloaded files, thumbnails and partial downloads, without the folder tree and photo details
+    private fun mediaCacheDirs(context: Context) = listOf(filesDir(context), headsDir(context), attrsDir(context))
+
+    fun getMediaCacheSize(context: Context): Long = mediaCacheDirs(context).sumOf { dir ->
+        dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+    }
+
+    fun clearMediaCache(context: Context) {
+        mediaCacheDirs(context).forEach { dir ->
+            // keep files being downloaded, which are written by other threads
+            dir.listFiles()?.filter { !it.name.endsWith(".part") }?.forEach { it.deleteRecursively() }
+        }
+    }
+
+    fun clearCache(context: Context) {
+        cacheRoot(context).deleteRecursively()
+    }
+
+    // MEGA file contents are immutable for a given handle, so the handle is a valid cache key
+    fun getFile(context: Context, node: MegaNode): File {
+        val target = File(filesDir(context), node.handle)
+        val fileLock = fileLocks.getOrPut(node.handle) { Any() }
+        synchronized(fileLock) {
+            if (target.exists() && target.length() == node.size) {
+                target.setLastModified(System.currentTimeMillis())
+                return target
+            }
+            val temp = File(target.parentFile, "${node.handle}.part")
+            try {
+                withSession(context) {
+                    FileOutputStream(temp).use { output -> client.download(node, output) }
+                }
+                if (!temp.renameTo(target)) throw java.io.IOException("failed to move downloaded file to cache")
+            } finally {
+                temp.delete()
+            }
+        }
+        return target
+    }
+
+    // bytes downloaded so far by `getFile`, or null when no download is in progress
+    fun getDownloadedBytes(context: Context, handle: String): Long? {
+        val temp = File(filesDir(context), "$handle.part")
+        return if (temp.exists()) temp.length() else null
+    }
+
+    // first bytes of a file, enough to read dimensions and EXIF metadata in most cases
+    fun getHead(context: Context, node: MegaNode, length: Long): File {
+        val full = File(filesDir(context), node.handle)
+        if (full.exists() && full.length() == node.size) return full
+        val target = File(headsDir(context), "${node.handle}_$length")
+        if (target.exists() && target.length() > 0) return target
+        val temp = File(target.parentFile, "${target.name}.part")
+        try {
+            withSession(context) {
+                FileOutputStream(temp).use { output ->
+                    client.download(node, output, start = 0, end = (minOf(length, node.size) - 1).coerceAtLeast(0))
+                }
+            }
+            temp.renameTo(target)
+        } finally {
+            temp.delete()
+        }
+        return target
+    }
+
+    fun getCachedFileAttribute(context: Context, node: MegaNode, type: Int): ByteArray? {
+        if (!node.fileAttributes.containsKey(type)) return null
+        val target = File(attrsDir(context), "${node.handle}_$type.jpg")
+        if (target.exists() && target.length() > 0) return target.readBytes()
+        val bytes = withSession(context) { client.getFileAttribute(node, type) } ?: return null
+        try {
+            target.writeBytes(bytes)
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "failed to cache file attribute for handle=${node.handle}", e)
+        }
+        return bytes
+    }
+
+    // URIs
+
+    fun authority(context: Context) = "${context.packageName}.mega"
+
+    fun uriFor(context: Context, handle: String): Uri = Uri.Builder()
+        .scheme("content")
+        .authority(authority(context))
+        .appendPath("node")
+        .appendPath(handle)
+        .build()
+
+    fun isMegaUri(context: Context, uri: Uri): Boolean = uri.scheme == "content" && uri.authority == authority(context)
+
+    fun handleFromUri(uri: Uri): String? {
+        val segments = uri.pathSegments
+        return if (segments.size >= 2 && segments[0] == "node") segments[1] else null
+    }
+
+    fun mimeTypeFor(name: String): String? {
+        val ext = name.substringAfterLast('.', "").lowercase(Locale.ROOT)
+        if (ext.isEmpty()) return null
+        return when (ext) {
+            "jpg", "jpeg", "jpe", "jfif" -> MimeTypes.JPEG
+            "png" -> MimeTypes.PNG
+            "gif" -> MimeTypes.GIF
+            "webp" -> MimeTypes.WEBP
+            "heic", "heif" -> MimeTypes.HEIC
+            "avif" -> "image/avif"
+            "bmp" -> MimeTypes.BMP
+            "tif", "tiff" -> MimeTypes.TIFF
+            "dng" -> MimeTypes.DNG_ADOBE
+            "mp4", "m4v" -> "video/mp4"
+            "mov" -> "video/quicktime"
+            "webm" -> "video/webm"
+            "mkv" -> "video/x-matroska"
+            "3gp" -> "video/3gpp"
+            else -> android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
+        }
+    }
+
+    fun isMedia(name: String): Boolean {
+        val mimeType = mimeTypeFor(name) ?: return false
+        return mimeType.startsWith("image/") || mimeType.startsWith("video/")
+    }
+}

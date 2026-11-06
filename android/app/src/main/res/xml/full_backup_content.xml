@@ -15,4 +15,11 @@
     <exclude
         domain="sharedpref"
         path="secret_shared_prefs.xml" />
+    <!-- MEGA session and downloaded files stay on this device -->
+    <exclude
+        domain="sharedpref"
+        path="mega_session.xml" />
+    <exclude
+        domain="file"
+        path="mega/" />
 </full-backup-content>

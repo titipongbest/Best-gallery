@@ -476,7 +476,7 @@ extension ExtraAvesEntryMetadataEdition on AvesEntry {
 
     final editedXmpString = await XMP.edit(
       xmpString,
-      'Aves v${device.packageVersion}',
+      'Best gallery v${device.packageVersion}',
       apply,
     );
 

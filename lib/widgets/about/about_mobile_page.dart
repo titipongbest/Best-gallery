@@ -1,5 +1,7 @@
+import 'package:aves/theme/icons.dart';
 import 'package:aves/widgets/about/app_ref.dart';
 import 'package:aves/widgets/about/bug_report.dart';
+import 'package:aves/widgets/about/crash_log_page.dart';
 import 'package:aves/widgets/about/credits.dart';
 import 'package:aves/widgets/about/data_usage.dart';
 import 'package:aves/widgets/about/licenses.dart';
@@ -31,6 +33,17 @@ class AboutMobilePage extends StatelessWidget {
                       const AppReference(),
                       const Divider(),
                       const BugReport(),
+                      ListTile(
+                        leading: const Icon(AIcons.error),
+                        title: Text(context.l10n.crashLogPageTitle),
+                        subtitle: Text(context.l10n.crashLogTileSubtitle),
+                        onTap: () => Navigator.maybeOf(context)?.push(
+                          MaterialPageRoute(
+                            settings: const RouteSettings(name: CrashLogPage.routeName),
+                            builder: (context) => const CrashLogPage(),
+                          ),
+                        ),
+                      ),
                       const Divider(),
                       const AboutDataUsage(),
                       const Divider(),

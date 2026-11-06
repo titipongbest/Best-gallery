@@ -445,9 +445,15 @@ mixin EntryStorageMixin on FeedbackMixin, PermissionAwareMixin, SizeAwareMixin, 
     final todoCount = entries.length;
     assert(todoCount > 0);
 
-    if (!await checkStoragePermission(context, entries)) return false;
+    // MEGA entries are renamed remotely: no local storage permission or metadata date is involved
+    final isMega = entries.every((entry) => entry.isMegaContent);
+    if (isMega) {
+      persist = false;
+    } else {
+      if (!await checkStoragePermission(context, entries)) return false;
 
-    if (!await checkUndatedItems(context, entries)) return false;
+      if (!await checkUndatedItems(context, entries)) return false;
+    }
 
     final source = context.read<CollectionSource>();
     source.pauseMonitoring();

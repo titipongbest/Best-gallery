@@ -1,11 +1,11 @@
 import 'package:aves/locale/aves_locale.dart';
 import 'package:aves/model/filters/favourite.dart';
 import 'package:aves/model/filters/filters.dart';
-import 'package:aves/model/filters/mime.dart';
 import 'package:aves/model/filters/recent.dart';
 import 'package:aves/model/naming_pattern.dart';
 import 'package:aves/ref/mime_types.dart';
 import 'package:aves/widgets/collection/collection_page.dart';
+import 'package:aves/widgets/common/search/page.dart';
 import 'package:aves/widgets/explorer/explorer_page.dart';
 import 'package:aves/widgets/filter_grids/albums_page.dart';
 import 'package:aves/widgets/filter_grids/countries_page.dart';
@@ -50,8 +50,8 @@ class SettingsDefaults {
   ];
   static final bottomNavigationActions = [
     const AvesNavItem(route: CollectionPage.routeName),
-    AvesNavItem(route: CollectionPage.routeName, filters: {MimeFilter.video}),
     AvesNavItem(route: CollectionPage.routeName, filters: {FavouriteFilter.instance}),
+    const AvesNavItem(route: SearchPage.routeName),
     const AvesNavItem(route: AlbumListPage.routeName),
   ];
 

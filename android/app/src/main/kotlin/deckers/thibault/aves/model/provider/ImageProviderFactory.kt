@@ -3,6 +3,7 @@ package deckers.thibault.aves.model.provider
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import deckers.thibault.aves.mega.MegaRepository
 import deckers.thibault.aves.storage.StorageUtils
 import java.util.Locale
 
@@ -12,6 +13,8 @@ object ImageProviderFactory {
             ContentResolver.SCHEME_CONTENT -> {
                 if (StorageUtils.isMediaStoreContentUri(uri)) {
                     MediaStoreImageProvider()
+                } else if (MegaRepository.isMegaUri(context, uri)) {
+                    MegaImageProvider()
                 } else if (AvesEmbeddedMediaProvider.provides(context, uri)) {
                     AvesEmbeddedMediaProvider()
                 } else {

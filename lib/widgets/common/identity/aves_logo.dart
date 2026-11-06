@@ -1,3 +1,6 @@
+import 'dart:math';
+import 'dart:ui' as ui;
+
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/common/fx/borders.dart';
@@ -14,9 +17,13 @@ class const AvesLogo({
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    Widget child = CustomPaint(
-      size: Size(size / 1.4, size / 1.4),
-      painter: AvesLogoPainter(),
+    // the symbol alone, as the name is unreadable at small sizes
+    Widget child = Image.asset(
+      'assets/best_gallery_symbol.png',
+      width: size * .68,
+      height: size * .68,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.medium,
     );
     if (context.select<Settings, bool>((v) => v.themeColorMode == AvesThemeColorMode.monochrome)) {
       final tint = Color.lerp(theme.colorScheme.primary, Colors.white, .5)!;
@@ -35,7 +42,7 @@ class const AvesLogo({
         backgroundColor: theme.dividerColor,
         radius: size / 2,
         child: CircleAvatar(
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xfffdf9f1),
           radius: size / 2 - AvesBorder.curvedBorderWidth(context),
           child: child,
         ),
@@ -44,109 +51,138 @@ class const AvesLogo({
   }
 }
 
+// Best gallery logo: stacked photo cards with a champagne gold bezel,
+// matching the launcher icon (drawn in the same 108x108 viewport)
 class AvesLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final dim = size.width / 100;
-    final strokePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = Colors.black
-      ..strokeWidth = dim * 3.050970
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+    // logo content fits within [25, 83] of the viewport
+    const origin = 25.0;
+    const extent = 58.0;
+    final scale = size.width / extent;
 
-    final path0 = Path();
-    path0.moveTo(31.784 * dim, 63.612 * dim);
-    path0.lineTo(48.252 * dim, 80.08 * dim);
-    final radius = Radius.elliptical(2.911 * dim, 2.911 * dim);
-    path0.arcToPoint(Offset(48.252 * dim, 84.196 * dim), radius: radius, rotation: 0, largeArc: false, clockwise: true);
-    path0.lineTo(40.379000000000005 * dim, 92.069 * dim);
-    path0.arcToPoint(Offset(19.072000000000006 * dim, 92.069 * dim), radius: Radius.elliptical(15.067 * dim, 15.067 * dim), rotation: 0, largeArc: false, clockwise: true);
-    path0.lineTo(11.2 * dim, 84.197 * dim);
-    path0.arcToPoint(Offset(11.2 * dim, 80.08 * dim), radius: radius, rotation: 0, largeArc: false, clockwise: true);
-    path0.lineTo(27.668 * dim, 63.611999999999995 * dim);
-    path0.arcToPoint(Offset(31.785 * dim, 63.611999999999995 * dim), radius: radius, rotation: 0, largeArc: false, clockwise: true);
-    path0.close();
+    canvas.save();
+    canvas.scale(scale);
+    canvas.translate(-origin, -origin);
 
-    final path1 = Path();
-    path1.moveTo(56.368 * dim, 39.026 * dim);
-    path1.lineTo(72.837 * dim, 55.494 * dim);
-    final radius2 = Radius.elliptical(2.904 * dim, 2.904 * dim);
-    path1.arcToPoint(Offset(72.837 * dim, 59.611 * dim), radius: radius2, rotation: 0, largeArc: false, clockwise: true);
-    path1.lineTo(56.367000000000004 * dim, 76.079 * dim);
-    path1.arcToPoint(Offset(52.252 * dim, 76.079 * dim), radius: radius2, rotation: 0, largeArc: false, clockwise: true);
-    path1.lineTo(35.784 * dim, 59.611 * dim);
-    path1.arcToPoint(Offset(35.784 * dim, 55.495 * dim), radius: radius2, rotation: 0, largeArc: false, clockwise: true);
-    path1.lineTo(52.251999999999995 * dim, 39.027 * dim);
-    path1.arcToPoint(Offset(56.367999999999995 * dim, 39.027 * dim), radius: radius2, rotation: 0, largeArc: false, clockwise: true);
-    path1.close();
+    Shader linear(Offset from, Offset to, List<Color> colors, [List<double>? stops]) => ui.Gradient.linear(from, to, colors, stops);
+    Paint fill(Color color) => Paint()..color = color;
 
-    final path2 = Path();
-    path2.moveTo(60.37 * dim, 30.908 * dim);
-    final radius4 = Radius.elliptical(2.91 * dim, 2.91 * dim);
-    path2.arcToPoint(Offset(60.37 * dim, 35.025 * dim), radius: radius4, rotation: 0, largeArc: false, clockwise: false);
-    path2.lineTo(76.838 * dim, 51.492 * dim);
-    path2.arcToPoint(Offset(80.954 * dim, 51.492 * dim), radius: radius4, rotation: 0, largeArc: false, clockwise: false);
-    path2.lineTo(97.422 * dim, 35.025 * dim);
-    path2.arcToPoint(Offset(97.422 * dim, 30.907999999999998 * dim), radius: radius4, rotation: 0, largeArc: false, clockwise: false);
-    path2.lineTo(89.24799999999999 * dim, 22.733999999999998 * dim);
-    path2.arcToPoint(Offset(68.54399999999998 * dim, 22.733999999999998 * dim), radius: Radius.elliptical(14.64 * dim, 14.64 * dim), rotation: 0, largeArc: false, clockwise: false);
-    path2.close();
-    path2.moveTo(76.624 * dim, 30.695 * dim);
-    final radius5 = Radius.elliptical(3.213 * dim, 3.213 * dim);
-    path2.arcToPoint(Offset(81.167 * dim, 30.695 * dim), radius: radius5, rotation: 0, largeArc: false, clockwise: true);
-    path2.arcToPoint(Offset(81.167 * dim, 35.237 * dim), radius: radius5, rotation: 0, largeArc: false, clockwise: true);
-    path2.arcToPoint(Offset(76.624 * dim, 35.237 * dim), radius: radius5, rotation: 0, largeArc: false, clockwise: true);
-    path2.arcToPoint(Offset(76.624 * dim, 30.694000000000003 * dim), radius: radius5, rotation: 0, largeArc: false, clockwise: true);
-    path2.close();
+    void rotated(Offset pivot, double degrees, VoidCallback draw) {
+      canvas.save();
+      canvas.translate(pivot.dx, pivot.dy);
+      canvas.rotate(degrees * pi / 180);
+      canvas.translate(-pivot.dx, -pivot.dy);
+      draw();
+      canvas.restore();
+    }
 
-    final path3 = Path();
-    path3.moveTo(24.305 * dim, 6.96 * dim);
-    path3.lineTo(48.35 * dim, 31.004 * dim);
-    path3.arcToPoint(Offset(48.35 * dim, 35.121 * dim), radius: radius, rotation: 0, largeArc: false, clockwise: true);
-    path3.lineTo(31.882 * dim, 51.588 * dim);
-    path3.arcToPoint(Offset(27.765 * dim, 51.588 * dim), radius: radius, rotation: 0, largeArc: false, clockwise: true);
-    path3.lineTo(17.084 * dim, 40.907 * dim);
-    path3.arcToPoint(Offset(17.084 * dim, 8.75 * dim), radius: Radius.elliptical(22.738 * dim, 22.738 * dim), rotation: 0, largeArc: false, clockwise: true);
-    path3.lineTo(18.874 * dim, 6.96 * dim);
-    path3.arcToPoint(Offset(24.305 * dim, 6.96 * dim), radius: Radius.elliptical(3.84 * dim, 3.84 * dim), rotation: 0, largeArc: false, clockwise: true);
-    path3.close();
+    // back card
+    rotated(const Offset(52, 54), -14, () {
+      final back = RRect.fromLTRBR(31, 32, 73, 74, const Radius.circular(7));
+      canvas.drawRRect(back.shift(const Offset(1.6, 3)), fill(const Color(0x126b4e1f)));
+      canvas.drawRRect(back.shift(const Offset(.8, 1.5)), fill(const Color(0x126b4e1f)));
+      canvas.drawRRect(
+        back,
+        Paint()..shader = linear(const Offset(30, 30), const Offset(78, 78), const [Color(0xffffffff), Color(0xffe6d6ba)]),
+      );
+      canvas.drawRRect(
+        back,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = .8
+          ..color = const Color(0xffd2b67e),
+      );
+    });
 
-    canvas.drawPath(
-      path0,
-      Paint()
-        ..style = PaintingStyle.fill
-        ..color = const Color(0xffef435a),
-    );
+    // front card
+    rotated(const Offset(54, 54), 4, () {
+      final front = RRect.fromLTRBR(34, 33, 76, 75, const Radius.circular(7));
+      final photo = RRect.fromLTRBR(38.5, 37, 71.5, 71, const Radius.circular(4));
+      canvas.drawRRect(front.shift(const Offset(2, 4)), fill(const Color(0x145a3e12)));
+      canvas.drawRRect(front.shift(const Offset(1, 2)), fill(const Color(0x1a5a3e12)));
+      canvas.drawRRect(
+        front,
+        Paint()
+          ..shader = linear(
+            const Offset(32, 30),
+            const Offset(76, 80),
+            const [Color(0xfff5e3b5), Color(0xffd8b677), Color(0xffb8904e), Color(0xffe2c68c)],
+            const [0, .35, .7, 1],
+          ),
+      );
 
-    canvas.drawPath(
-      path1,
-      Paint()
-        ..style = PaintingStyle.fill
-        ..color = const Color(0xffe0e0e0),
-    );
+      canvas.save();
+      canvas.clipRRect(photo);
+      canvas.drawRRect(
+        photo,
+        Paint()..shader = linear(const Offset(0, 37), const Offset(0, 71), const [Color(0xfffffdf8), Color(0xfff6e7c9)]),
+      );
+      canvas.drawCircle(
+        const Offset(61.5, 45.5),
+        4.6,
+        Paint()
+          ..shader = ui.Gradient.radial(
+            const Offset(61.5, 45.5),
+            4.6,
+            const [Color(0xfffff8e2), Color(0xfff0d594), Color(0xffd9b064)],
+            const [0, .6, 1],
+          ),
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(38.5, 62)
+          ..lineTo(47, 52)
+          ..lineTo(55, 60)
+          ..lineTo(60, 55.5)
+          ..lineTo(71.5, 66)
+          ..lineTo(71.5, 71)
+          ..lineTo(38.5, 71)
+          ..close(),
+        Paint()..shader = linear(const Offset(0, 50), const Offset(0, 71), const [Color(0xffead5a8), Color(0xffd6b67c)]),
+      );
+      final frontPeaks = Paint()..shader = linear(const Offset(40, 54), const Offset(70, 72), const [Color(0xffd3ae6a), Color(0xff9c7333)]);
+      canvas.drawPath(
+        Path()
+          ..moveTo(38.5, 66)
+          ..lineTo(48.5, 56)
+          ..lineTo(60, 71)
+          ..lineTo(38.5, 71)
+          ..close(),
+        frontPeaks,
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(52, 71)
+          ..lineTo(61.5, 60)
+          ..lineTo(71.5, 69)
+          ..lineTo(71.5, 71)
+          ..close(),
+        frontPeaks,
+      );
+      canvas.restore();
 
-    canvas.drawPath(
-      path2,
-      Paint()
-        ..style = PaintingStyle.fill
-        ..color = const Color(0xffffc11f),
-    );
+      canvas.drawRRect(
+        photo,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = .5
+          ..color = const Color(0x598e6a2e),
+      );
 
-    canvas.drawPath(
-      path3,
-      Paint()
-        ..style = PaintingStyle.fill
-        ..color = const Color(0xff1cc8eb),
-    );
+      // gloss on top bezel
+      canvas.save();
+      canvas.clipRect(const Rect.fromLTRB(34, 33, 76, 41));
+      canvas.drawRRect(
+        RRect.fromLTRBR(34.6, 33.6, 75.4, 74.4, const Radius.circular(6.4)),
+        Paint()..shader = linear(const Offset(0, 33), const Offset(0, 42), const [Color(0xb3ffffff), Color(0x00ffffff)]),
+      );
+      canvas.restore();
+    });
 
-    // stroke should be painted over fill
-    canvas.drawPath(path0, strokePaint);
-    canvas.drawPath(path1, strokePaint);
-    canvas.drawPath(path2, strokePaint);
-    canvas.drawPath(path3, strokePaint);
+    canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

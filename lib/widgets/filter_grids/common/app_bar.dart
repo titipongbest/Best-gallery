@@ -46,6 +46,8 @@ class FilterGridAppBar<T extends CollectionFilter, CSAD extends ChipSetActionDel
   final ValueNotifier<double> appBarHeightNotifier;
   final ScrollController scrollController;
   final void Function(BuildContext context, T filter)? onGroupCrumbTap;
+  final Widget? header;
+  final double headerHeight;
 
   const new({
     super.key,
@@ -56,6 +58,8 @@ class FilterGridAppBar<T extends CollectionFilter, CSAD extends ChipSetActionDel
     required this.appBarHeightNotifier,
     required this.scrollController,
     required this.onGroupCrumbTap,
+    this.header,
+    this.headerHeight = 0,
   });
 
   @override
@@ -127,6 +131,16 @@ class _FilterGridAppBarState<T extends CollectionFilter, CSAD extends ChipSetAct
   }
 
   @override
+  void didUpdateWidget(covariant FilterGridAppBar<T, CSAD> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((oldWidget.header == null) != (widget.header == null) || oldWidget.headerHeight != widget.headerHeight) {
+      // keep the height used by the grid to find the item under a long press in sync,
+      // e.g. when the album shortcuts are hidden inside an album group
+      WidgetsBinding.instance.addPostFrameCallback((_) => _updateAppBarHeight());
+    }
+  }
+
+  @override
   void dispose() {
     _queryBarFocusNode.dispose();
     _queryFocusRequestNotifier.removeListener(_onQueryFocusRequest);
@@ -173,12 +187,16 @@ class _FilterGridAppBarState<T extends CollectionFilter, CSAD extends ChipSetAct
           return AvesAppBar(
             contentHeight: _getAppBarContentHeight(context),
             pinned: context.select<Selection<FilterGridItem<T>>, bool>((selection) => selection.isSelecting),
+            // keep the quick access tiles at the top, instead of covering the grid on every scroll up
+            floating: widget.header == null,
             leading: _buildAppBarLeading(
               hasDrawer: appMode.canNavigate,
               isSelecting: isSelecting,
             ),
             title: _buildAppBarTitle(isSelecting),
             actions: (context, maxWidth) => useTvLayout ? [] : actionsBuilder(context, appMode, selection, actionDelegate),
+            header: widget.header,
+            headerHeight: widget.headerHeight,
             bottom: Column(
               children: [
                 if (useTvLayout)
@@ -242,9 +260,12 @@ class _FilterGridAppBarState<T extends CollectionFilter, CSAD extends ChipSetAct
 
   static bool _showQueryLine(BuildContext context) => context.read<Query?>()?.enabled ?? false;
 
-  static double _getAppBarContentHeight(BuildContext context) {
+  double _getAppBarContentHeight(BuildContext context) {
     final textScaler = MediaQuery.textScalerOf(context);
     double height = textScaler.scale(kToolbarHeight);
+    if (widget.header != null) {
+      height += widget.headerHeight;
+    }
     if (settings.useTvLayout) {
       height += CaptionedButton.getTelevisionButtonHeight(context);
     }

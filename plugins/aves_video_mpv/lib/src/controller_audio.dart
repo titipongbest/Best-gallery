@@ -93,7 +93,7 @@ class MpvAudioController(super.entry) extends AvesAudioController {
     // As of 2025/01/13, directly setting audio output via property works for some files but not all,
     // and switching from a supported file to an unsupported file crashes:
     // cf https://github.com/media-kit/media-kit/issues/1061
-    await _mkPlayer.open(Media(entry.uri), play: playing);
+    await _mkPlayer.open(Media(await MediaUris.resolve(entry.uri)), play: playing);
 
     _statusStreamController.add(_mkPlayer.state.playing ? .playing : .paused);
   }

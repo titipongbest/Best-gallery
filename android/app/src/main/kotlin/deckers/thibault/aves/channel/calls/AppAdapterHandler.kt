@@ -66,6 +66,7 @@ class AppAdapterHandler(private val context: Context) : MethodCallHandler {
             "copyToClipboard" -> ioScope.launch { safe(call, result, ::copyToClipboard) }
             "open" -> safe(call, result, ::open)
             "openMap" -> safe(call, result, ::openMap)
+            "launchApp" -> safe(call, result, ::launchApp)
             "setAs" -> safe(call, result, ::setAs)
             "share" -> safe(call, result, ::share)
             "pinShortcut" -> ioScope.launch { safe(call, result, ::pinShortcut) }
@@ -277,6 +278,23 @@ class AppAdapterHandler(private val context: Context) : MethodCallHandler {
         val started = safeStartActivity(intent)
 
         result.success(started)
+    }
+
+    // Best gallery: open another installed app by its package name
+    private fun launchApp(call: MethodCall, result: MethodChannel.Result) {
+        val packageName = call.argument<String>("packageName")
+        if (packageName == null) {
+            result.error("launchApp-args", "missing arguments", null)
+            return
+        }
+
+        val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+        if (intent == null) {
+            result.success(false)
+            return
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        result.success(safeStartActivity(intent))
     }
 
     private fun setAs(call: MethodCall, result: MethodChannel.Result) {

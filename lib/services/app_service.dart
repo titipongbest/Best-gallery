@@ -32,6 +32,8 @@ abstract class AppService {
 
   Future<bool> openMap(LatLng latLng);
 
+  Future<bool> launchApp(String packageName);
+
   Future<bool> setAs(String uri, String mimeType);
 
   Future<bool> shareEntries(Iterable<AvesEntry> entries);
@@ -158,6 +160,19 @@ class PlatformAppService implements AppService {
     try {
       final result = await _platform.invokeMethod('openMap', <String, Object?>{
         'geoUri': toGeoUri(latLng),
+      });
+      if (result != null) return result as bool;
+    } on PlatformException catch (e, stack) {
+      await reportService.recordError(e, stack);
+    }
+    return false;
+  }
+
+  @override
+  Future<bool> launchApp(String packageName) async {
+    try {
+      final result = await _platform.invokeMethod('launchApp', <String, Object?>{
+        'packageName': packageName,
       });
       if (result != null) return result as bool;
     } on PlatformException catch (e, stack) {

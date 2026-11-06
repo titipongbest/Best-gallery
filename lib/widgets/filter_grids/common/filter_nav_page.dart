@@ -32,6 +32,8 @@ class FilterNavigationPage<T extends CollectionFilter, CSAD extends ChipSetActio
   final Map<ChipSectionKey, List<FilterGridItem<T>>> filterSections;
   final Set<T>? newFilters;
   final Widget Function() emptyBuilder;
+  final Widget? header;
+  final double headerHeight;
 
   const new({
     super.key,
@@ -43,6 +45,8 @@ class FilterNavigationPage<T extends CollectionFilter, CSAD extends ChipSetActio
     required this.filterSections,
     this.newFilters,
     required this.emptyBuilder,
+    this.header,
+    this.headerHeight = 0,
   });
 
   @override
@@ -152,6 +156,8 @@ class _FilterNavigationPageState<T extends CollectionFilter, CSAD extends ChipSe
                 actionDelegate: widget.actionDelegate,
                 appBarHeightNotifier: _appBarHeightNotifier,
                 scrollController: scrollController,
+                header: widget.header,
+                headerHeight: widget.headerHeight,
                 onGroupCrumbTap: (context, filter) {
                   final selection = context.read<Selection<FilterGridItem<T>>?>();
                   if (selection == null || !selection.isSelecting) {

@@ -175,14 +175,15 @@ class _CollectionPageState extends State<CollectionPage> {
   Widget? _buildFab(BuildContext context, bool isSelecting, int selectedItemCount) {
     final actionDelegate = EntrySetActionDelegate();
     final action = EntrySetActions.fab.firstWhereOrNull((action) {
-      return actionDelegate.isVisible(
-        action,
-        appMode: context.watch<ValueNotifier<AppMode>>().value,
-        isSelecting: isSelecting,
-        itemCount: _collection.entryCount,
-        selectedItemCount: selectedItemCount,
-        isTrash: _collection.filters.contains(TrashFilter.instance),
-      );
+      return EntrySetActionDelegate.isAllowedFor(action, _collection.source) &&
+          actionDelegate.isVisible(
+            action,
+            appMode: context.watch<ValueNotifier<AppMode>>().value,
+            isSelecting: isSelecting,
+            itemCount: _collection.entryCount,
+            selectedItemCount: selectedItemCount,
+            isTrash: _collection.filters.contains(TrashFilter.instance),
+          );
     });
 
     if (action != null) {

@@ -1,6 +1,7 @@
 export 'src/ab_repeat.dart';
 export 'src/controller_audio.dart';
 export 'src/controller_video.dart';
+export 'src/media_uri.dart';
 export 'src/metadata.dart';
 export 'src/settings/subtitles.dart';
 export 'src/settings/video.dart';
