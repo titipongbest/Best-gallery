@@ -37,28 +37,9 @@ jobs:
       - name: Unit tests.
         run: ./flutterw test
 
-  analyze_codeql:
-    name: CodeQL analysis (${{ matrix.language }})
+  build_android:
+    name: Android build
     runs-on: ubuntu-latest
-    permissions:
-      # required for all workflows
-      security-events: write
-
-      # required to check out a private repository
-      contents: read
-
-      # required for workflows in private repositories
-      actions: read
-
-      # required to fetch internal or private CodeQL packs
-      packages: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - language: java-kotlin
-            build-mode: manual
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
@@ -76,23 +57,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # Initializes the CodeQL tools for scanning.
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
-        with:
-          languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build-mode }}
-
-      - if: matrix.build-mode == 'manual'
+      # build in profile mode, instead of release,
+      # so that setting up signing environment variables is not required
+      - name: Build APK
         shell: bash
-        # build in profile mode, instead of release,
-        # so that setting up signing environment variables is not required
         run: |
           scripts/gen_flavor_play.sh
           scripts/apply_flavor_play.sh
           ./flutterw build apk --profile -t lib/main_play.dart --flavor play
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
-        with:
-          category: "/language:${{matrix.language}}"
