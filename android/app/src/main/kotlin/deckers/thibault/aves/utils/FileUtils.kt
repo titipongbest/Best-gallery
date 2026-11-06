@@ -88,6 +88,11 @@ object FileUtils {
                 }
             }
         }
+        // keep the original modified date on the copy
+        val sourceLastModified = sourceFile.lastModified()
+        if (sourceLastModified > 0) {
+            targetFile.setLastModified(sourceLastModified)
+        }
     }
 
     // use `FileChannel` when possible, as it is potentially more efficient according to documentation

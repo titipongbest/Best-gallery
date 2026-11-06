@@ -14,6 +14,7 @@ import 'package:aves/theme/icons.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/common/identity/empty.dart';
 import 'package:aves/widgets/common/providers/filter_group_provider.dart';
+import 'package:aves/widgets/filter_grids/album_quick_access.dart';
 import 'package:aves/widgets/filter_grids/common/action_delegates/album_set.dart';
 import 'package:aves/widgets/filter_grids/common/enums.dart';
 import 'package:aves/widgets/filter_grids/common/filter_nav_page.dart';
@@ -77,6 +78,8 @@ class AlbumListPage extends StatelessWidget {
                               icon: AIcons.album,
                               text: context.l10n.albumEmpty,
                             ),
+                            header: groupUri == null && !settings.useTvLayout ? AlbumQuickAccessBar(source: source) : null,
+                            headerHeight: AlbumQuickAccessBar.preferredHeight,
                           ),
                         );
                       },

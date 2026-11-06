@@ -39,6 +39,9 @@ import deckers.thibault.aves.channel.calls.MediaEditHandler
 import deckers.thibault.aves.channel.calls.MediaFetchObjectHandler
 import deckers.thibault.aves.channel.calls.MediaSessionHandler
 import deckers.thibault.aves.channel.calls.MediaStoreHandler
+import deckers.thibault.aves.channel.calls.MegaHandler
+import deckers.thibault.aves.channel.calls.CrashLogHandler
+import deckers.thibault.aves.utils.CrashLog
 import deckers.thibault.aves.channel.calls.MetadataEditHandler
 import deckers.thibault.aves.channel.calls.MetadataFetchHandler
 import deckers.thibault.aves.channel.calls.SecurityHandler
@@ -90,6 +93,7 @@ open class MainActivity : FlutterFragmentActivity() {
     private lateinit var mediaSessionHandler: MediaSessionHandler
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        CrashLog.install(this)
         Log.i(LOG_TAG, "onCreate intent=$intent")
         logExtras(intent, "onCreate")
 
@@ -165,6 +169,8 @@ open class MainActivity : FlutterFragmentActivity() {
         MethodChannel(messenger, GlobalSearchHandler.CHANNEL).setMethodCallHandler(GlobalSearchHandler(this))
         MethodChannel(messenger, HomeWidgetHandler.CHANNEL).setMethodCallHandler(HomeWidgetHandler(this))
         MethodChannel(messenger, MediaEditHandler.CHANNEL).setMethodCallHandler(MediaEditHandler(this))
+        MethodChannel(messenger, MegaHandler.CHANNEL).setMethodCallHandler(MegaHandler(this))
+        MethodChannel(messenger, CrashLogHandler.CHANNEL).setMethodCallHandler(CrashLogHandler(this))
         MethodChannel(messenger, MediaFetchObjectHandler.CHANNEL).setMethodCallHandler(MediaFetchObjectHandler(this))
         MethodChannel(messenger, MediaSessionHandler.CHANNEL).setMethodCallHandler(mediaSessionHandler)
         MethodChannel(messenger, MediaStoreHandler.CHANNEL).setMethodCallHandler(MediaStoreHandler(this))

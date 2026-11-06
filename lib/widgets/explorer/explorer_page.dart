@@ -171,6 +171,8 @@ class _ExplorerPageState extends State<ExplorerPage> {
           }
         }
       },
+      // e.g. virtual directories of cloud entries, or directories removed meanwhile
+      onError: (error) => debugPrint('failed to list directory=$dirPath with error=$error'),
       onDone: () {
         _contents.value = contents
           ..sort((a, b) {

@@ -3,7 +3,7 @@
     "doubleBackExitMessage": "Dar kartą bakstelėkite „atgal“, kad išeitumėte.",
     "showButtonLabel": "RODYTI",
     "showTooltip": "Rodyti",
-    "appName": "Aves",
+    "appName": "Best gallery",
     "welcomeOptional": "Neprivaloma",
     "welcomeTermsToggle": "Sutinku su taisyklėmis ir sąlygomis",
     "timeSeconds": "{count, plural, =1{{count} sekundė} few{{count} sekundės} other{{count} sekundžių}}",
@@ -154,7 +154,7 @@
     "collectionActionEmptyBin": "Išvalyti šiukšlinę",
     "collectionActionMove": "Perkelti į albumą",
     "collectionActionEdit": "Redaguoti",
-    "welcomeMessage": "Sveiki atvykę į Aves",
+    "welcomeMessage": "Sveiki atvykę į Best gallery",
     "itemCount": "{count, plural, =1{{count} elementas} few{{count} elementai} other{{count} elementų}}",
     "@itemCount": {
         "placeholders": {

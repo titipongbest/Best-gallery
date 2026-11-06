@@ -41,7 +41,7 @@
     "nextButtonLabel": "HURRENGOA",
     "showButtonLabel": "ERAKUTSI",
     "hideButtonLabel": "EZKUTATU",
-    "appName": "Aves",
+    "appName": "Best gallery",
     "welcomeMessage": "Ongi etorri",
     "welcomeOptional": "Aukerazkoa",
     "itemCount": "{count, plural, =1{elementu {count}} other{{count} elementu}}",

@@ -53,6 +53,25 @@ class EntryActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAwareMix
 
   new(this.mainEntry, this.pageEntry, this.collection);
 
+  static const _megaActions = {
+    EntryAction.info,
+    EntryAction.rename,
+    EntryAction.rotateScreen,
+    EntryAction.lockViewer,
+    EntryAction.videoToggleMute,
+    EntryAction.videoSelectTracks,
+    EntryAction.videoSetSpeed,
+    EntryAction.videoABRepeat,
+    EntryAction.videoSettings,
+    EntryAction.videoTogglePlay,
+    EntryAction.videoReplay10,
+    EntryAction.videoSkip10,
+    EntryAction.videoShowPreviousFrame,
+    EntryAction.videoShowNextFrame,
+    EntryAction.settings,
+    EntryAction.debug,
+  };
+
   bool isVisible({
     required AppMode appMode,
     required EntryAction action,
@@ -70,11 +89,14 @@ class EntryActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAwareMix
     } else {
       final targetEntry = EntryActions.pageActions.contains(action) ? pageEntry : mainEntry;
       final canWrite = appMode.canEditEntry && !settings.isReadOnly;
+      // MEGA entries are remote: only viewing and renaming are supported
+      if (targetEntry.isMegaContent && !_megaActions.contains(action)) return false;
       switch (action) {
         case .toggleFavourite:
           return collection != null;
-        case .delete:
         case .rename:
+          return canWrite && (targetEntry.canEdit || targetEntry.isMegaContent);
+        case .delete:
         case .move:
           return canWrite && targetEntry.canEdit;
         case .copy:
@@ -441,11 +463,15 @@ class EntryActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAwareMix
 
     if (!await checkStoragePermission(context, {targetEntry})) return;
 
-    if (!await targetEntry.delete()) {
+    final event = await targetEntry.delete();
+    if (event == null) {
       showFeedback(context, FeedbackType.warn, l10n.genericFailureFeedback);
     } else {
       final source = context.read<CollectionSource>();
       await source.removeEntries({targetEntry.uri}, includeTrash: true);
+      if (event.wiped) {
+        showFeedback(context, FeedbackType.info, l10n.wipeSuccessFeedback(1));
+      }
       EntryDeletedNotification({targetEntry}).dispatch(context);
     }
   }

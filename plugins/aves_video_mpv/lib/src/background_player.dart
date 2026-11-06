@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aves_video/aves_video.dart';
 import 'package:aves_video_mpv/aves_video_mpv.dart';
 import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
@@ -39,7 +40,7 @@ class BackgroundPlayer {
       }
     });
 
-    await player.open(Media(uri), play: false);
+    await player.open(Media(await MediaUris.resolve(uri)), play: false);
 
     final timeoutMillis = mimeType.startsWith('image') ? _probeTimeoutImage : _probeTimeoutVideo;
     await Future.any([videoDecodedCompleter.future, Future.pause(Duration(milliseconds: timeoutMillis))]);

@@ -13,6 +13,8 @@ import 'package:aves/services/metadata/svg_metadata_service.dart';
 extension ExtraAvesEntryCatalog on AvesEntry {
   Future<void> catalog({required bool background, required bool force, required bool persist}) async {
     if (isCatalogued && !force) return;
+    // MEGA entries are not stored in the local media database
+    persist = persist && !isMegaContent;
 
     if (isSvg) {
       // vector image sizing is not essential, so we should not spend time for it during loading

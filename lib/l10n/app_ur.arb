@@ -1,6 +1,6 @@
 {
-    "appName": "Aves",
-    "welcomeMessage": "Aves میں خوش آمدید",
+    "appName": "Best gallery",
+    "welcomeMessage": "Best gallery میں خوش آمدید",
     "welcomeOptional": "اختیاری",
     "welcomeTermsToggle": "میں شرائط و ضوابط سے اتفاق کرتا ہوں",
     "itemCount": "{count, plural, =1{{count} آئٹم} other{{count} آئٹمز}}",

@@ -204,7 +204,7 @@
     "settingsActionExport": "Flytja út",
     "filterNoTagLabel": "Ómerkt",
     "viewerInfoViewXmlLinkText": "Skoða XML",
-    "appName": "Aves",
+    "appName": "Best gallery",
     "sortOrderOldestFirst": "Elsta fyrst",
     "collectionRenameFailureFeedback": "{count, plural, =1{Mistókst að endurnefna 1 atriði} other{Mistókst að endurnefna {count} atriðum}}",
     "@collectionRenameFailureFeedback": {
@@ -579,7 +579,7 @@
     "settingsDisplaySectionTitle": "Birting",
     "settingsSlideshowTransitionTile": "Millifærsla",
     "settingsPageTitle": "Stillingar",
-    "welcomeMessage": "Velkomin í Aves",
+    "welcomeMessage": "Velkomin í Best gallery",
     "subtitlePositionTop": "Efst",
     "menuActionSelectNone": "Velja ekkert",
     "showButtonLabel": "BIRTA",

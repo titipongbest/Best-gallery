@@ -363,6 +363,7 @@ class AlbumChipSetActionDelegate extends ChipSetActionDelegate<AlbumBaseFilter> 
       context: context,
       opStream: mediaEditService.delete(opId: opId, entries: todoEntries),
       itemCount: todoCount,
+      label: l10n.wipeInProgress,
       onCancel: () => mediaEditService.cancelFileOp(opId),
       onDone: (processed) async {
         final successOps = processed.where((op) => op.success);
@@ -376,6 +377,11 @@ class AlbumChipSetActionDelegate extends ChipSetActionDelegate<AlbumBaseFilter> 
         if (successCount < todoCount) {
           final count = todoCount - successCount;
           showFeedbackWithMessenger(context, messenger, FeedbackType.warn, l10n.collectionDeleteFailureFeedback(count));
+        } else {
+          final wipedCount = deletedOps.where((op) => op.wiped).length;
+          if (wipedCount > 0) {
+            showFeedbackWithMessenger(context, messenger, FeedbackType.info, l10n.wipeSuccessFeedback(wipedCount));
+          }
         }
 
         // cleanup

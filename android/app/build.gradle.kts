@@ -8,7 +8,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Kotlin package of the app classes (kept from Aves)
 val packageName = "deckers.thibault.aves"
+
+// Best gallery: distinct application ID, so that it can be installed alongside the original Aves app
+val appId = "com.titipongbest.bestgallery"
 
 // Keys
 
@@ -60,7 +64,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = packageName
+        applicationId = appId
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -131,7 +135,9 @@ android {
             if (signingConfigs.names.contains("release")) {
                 signingConfig = signingConfigs.getByName("release")
             } else {
-                println("Skip release signing as it is not configured")
+                // Best gallery: fall back to the debug key so that CI builds are installable
+                println("Release signing is not configured, using debug signing config")
+                signingConfig = signingConfigs.getByName("debug")
             }
             isMinifyEnabled = true
             isShrinkResources = true

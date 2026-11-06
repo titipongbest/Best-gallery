@@ -29,6 +29,8 @@ class AIcons {
   static const error = Symbols.error;
   static const explorer = Symbols.account_tree;
   static const folder = Symbols.folder;
+  static const cloud = Symbols.cloud;
+  static const logout = Symbols.logout;
   static const github = MdiIcons.github; // ignore: deprecated_member_use
   static const help = Symbols.help;
   static const height = Symbols.fit_page_height;
@@ -121,6 +123,7 @@ class AIcons {
   static const convert = Symbols.transform;
   static const convertToStillImage = MdiIcons.movieRemoveOutline;
   static const copy = Symbols.file_copy;
+  static const save = Symbols.save;
   static const debug = Symbols.mode_heat;
   static const delete = Symbols.delete;
   static const edit = Symbols.edit;

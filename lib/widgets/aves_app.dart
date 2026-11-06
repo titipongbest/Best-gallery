@@ -7,6 +7,10 @@ import 'package:aves/geo/uri.dart';
 import 'package:aves/l10n/l10n.dart';
 import 'package:aves/model/app/intent.dart';
 import 'package:aves/model/app_inventory.dart';
+import 'package:aves/model/app_lock.dart';
+import 'package:aves/model/mega_lock.dart';
+import 'package:aves/services/crash_log_service.dart';
+import 'package:aves/services/mega_service.dart';
 import 'package:aves/model/device.dart';
 import 'package:aves/model/filters/recent.dart';
 import 'package:aves/model/settings/defaults.dart';
@@ -26,6 +30,8 @@ import 'package:aves/theme/icons.dart';
 import 'package:aves/theme/text.dart';
 import 'package:aves/theme/themes.dart';
 import 'package:aves/widgets/about/app_ref.dart';
+import 'package:aves/widgets/app_lock/app_lock_gate.dart';
+import 'package:aves/widgets/app_lock/mega_lock_gate.dart';
 import 'package:aves/widgets/collection/collection_grid.dart';
 import 'package:aves/widgets/collection/collection_page.dart';
 import 'package:aves/widgets/common/action_mixins/feedback.dart';
@@ -53,6 +59,7 @@ import 'package:collection/collection.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:equatable/equatable.dart';
 import 'package:event_bus/event_bus.dart';
+import 'package:aves_video/aves_video.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations_plus/flutter_localizations_plus.dart';
@@ -265,8 +272,7 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
                   final (settingsLocale, themeBrightness, enableDynamicColor) = s;
                   return DynamicColorBuilder(
                     builder: (lightScheme, darkScheme) {
-                      const defaultAccent = AvesColorsData.defaultAccent;
-                      Color lightAccent = defaultAccent, darkAccent = defaultAccent;
+                      Color lightAccent = AvesColorsData.defaultAccent, darkAccent = AvesColorsData.defaultDarkAccent;
                       if (enableDynamicColor) {
                         lightAccent = lightScheme?.primary ?? lightAccent;
                         darkAccent = darkScheme?.primary ?? darkAccent;
@@ -311,10 +317,14 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
                                   );
                                 },
                                 navigatorObservers: _navigatorObservers,
-                                builder: (context, child) => AvesAppContentDecorator(
-                                  initialized: initialized,
-                                  source: _mediaStoreSource,
-                                  child: child,
+                                builder: (context, child) => AppLockGate(
+                                  child: MegaLockGate(
+                                    child: AvesAppContentDecorator(
+                                      initialized: initialized,
+                                      source: _mediaStoreSource,
+                                      child: child,
+                                    ),
+                                  ),
                                 ),
                                 onGenerateTitle: (context) => context.l10n.appName,
                                 theme: lightTheme,
@@ -376,7 +386,13 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
           default:
             break;
         }
+      case .hidden:
+      case .paused:
+        appLock.onBackground();
+        megaLock.onBackground();
       case .resumed:
+        appLock.onForeground();
+        megaLock.onForeground();
         availability.onResume();
         RecentlyAddedFilter.updateNow();
         _mediaStoreSource.checkForChanges();
@@ -442,9 +458,15 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
   Future<void> _setup() async {
     final stopwatch = Stopwatch()..start();
 
+    // Best gallery: load the app lock state before showing any content
+    await appLock.init();
+    await megaLock.init();
+    // MEGA videos are downloaded before playing, as players open content on the main thread
+    MediaUris.resolver = (uri) async => uri.startsWith('content://${device.packageName}.mega/') ? await MegaDownloads.getLocalFilePath(uri) : null;
     await device.init();
     await mobileServices.init();
     await settings.init(monitorPlatformSettings: true, shouldSanitize: true);
+    settings.migrateBottomNavigationActions();
     settings.isRotationLocked = await windowService.isRotationLocked();
     settings.longPressTimeoutMillis = await AccessibilityService.getLongPressTimeout();
     settings.areAnimationsRemoved = await AccessibilityService.areAnimationsRemoved();
@@ -524,7 +546,15 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
         );
     await reportService.setCollectionEnabled(settings.isErrorReportingAllowed);
 
-    FlutterError.onError = reportService.recordFlutterError;
+    FlutterError.onError = (details) {
+      unawaited(crashLogService.record('Flutter error', details.exception, details.stack));
+      reportService.recordFlutterError(details);
+    };
+    final previousOnError = PlatformDispatcher.instance.onError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      unawaited(crashLogService.record('Uncaught error', error, stack));
+      return previousOnError?.call(error, stack) ?? false;
+    };
     final now = DateTime.now();
     await reportService.setCustomKeys({
       'build_mode': kReleaseMode

@@ -1,5 +1,60 @@
 <div align="center">
 
+<img src="best_gallery_logo.svg" alt='Best gallery logo' width="200" />
+
+## Best gallery
+
+Best gallery is a fork of [Aves](https://github.com/deckerst/aves), the gallery and metadata explorer app for Android built with Flutter.
+It keeps the original file dates when moving or copying media, so that items stay sorted as before.
+
+Refine by NorthXbar
+
+</div>
+
+### Best gallery versions
+
+The version shown in the app (About page and navigation drawer) comes from `version` in `pubspec.yaml`,
+which must be kept in sync with `flavors/pubspec_*.yaml`. Bump it with each update.
+
+- **2.0.2**
+  - photo grid back to square tiles with the original tight spacing
+- **2.0.1**
+  - icon-only navigation bar, devices on the previous default bar move to the new one
+  - rounded photo tiles with wider spacing, bold titles
+  - quick filter pills on the photos page: All, Favorites, Videos, Recently added
+- **2.0.0**
+  - redesigned lock page with the app's own keypad, deep PIN cells and fingerprint unlock
+  - pill navigation bar with Home, Albums, Search and Favorites
+  - "On this day" memories carousel at the top of the photos page
+  - quick access tiles above the albums: favorites, videos, recently added and bin
+- **1.6.0**
+  - "Golden Frame" colors matching the new icon: amber gold accents on cream surfaces, warm brown dark mode, gold lock page (glass style and layout unchanged)
+- **1.5.1**
+  - new app icon: golden photo frame over a stacked card, on a cream background
+- **1.5.0**
+  - "Azure Glass" design: royal blue accents on frosted periwinkle surfaces, rounded raised bars, cards, buttons and dialogs with soft shadows, and a glass-style lock page (layout and features unchanged)
+- **1.4.0**
+  - "Dawn Light" (แสงอุษา) theme: sunrise coral accent with lavender and morning gold companions, blush cream light surfaces and pre-dawn violet dark surfaces (layout and features unchanged)
+- **1.3.0**
+  - "Peacock Jewel" theme: peacock teal accent with orchid and gold companions, pearl light surfaces and midnight dark surfaces (layout and features unchanged)
+- **1.2.0**
+  - "Champagne Ivory" theme: champagne gold accent, ivory light surfaces and warm espresso dark surfaces (layout and features unchanged)
+- **1.1.1**
+  - progress circle back in the center of the screen during deletion, with the wipe label below it
+- **1.1.0**
+  - secure wipe progress label and a summary of wiped items after deleting
+- **1.0.0**
+  - rebranded as Best gallery, with its own app ID and a new icon
+  - original modified dates are kept when moving, copying, renaming, exporting, rotating and editing metadata
+  - deleted items are overwritten before removal
+  - items deleted by other apps disappear without restarting
+  - app lock with PIN ("Secure by NorthX")
+  - "Refine by NorthXbar" credit with version number
+
+---
+
+<div align="center">
+
 <img src="https://raw.githubusercontent.com/deckerst/aves/develop/aves_logo.svg" alt='Aves logo' width="200" />
 
 ## Aves

@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:aves/locale/aves_locale.dart';
 import 'package:aves/model/app/support.dart';
 import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/origins.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/model/source/trash.dart';
 import 'package:aves/ref/mime_types.dart';
@@ -132,11 +133,15 @@ extension ExtraAvesEntryProps on AvesEntry {
   }
 
   bool get isMissingAtPath {
+    // MEGA entries have a virtual path
+    if (isMegaContent) return false;
     final _storagePath = storagePath;
     return _storagePath != null && !File(_storagePath).existsSync();
   }
 
   // providers
+
+  bool get isMegaContent => origin == EntryOrigins.mega;
 
   bool get _isVaultContent => path?.startsWith(androidFileUtils.vaultRoot) ?? false;
 

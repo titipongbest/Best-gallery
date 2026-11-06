@@ -93,6 +93,8 @@
         from Android 11 (API 30), `url_launcher` method `canLaunchUrl()` will return false,
         if appropriate intents are not declared, cf https://pub.dev/packages/url_launcher#configuration=
         -->
+        <!-- Best gallery: to launch the IG ID Renamer app from the drawer -->
+        <package android:name="com.example.igrenamer" />
         <!-- to open https URLs -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
@@ -325,6 +327,13 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
+
+        <!-- serves decrypted MEGA cloud files to the app itself -->
+        <provider
+            android:name=".mega.MegaContentProvider"
+            android:authorities="${applicationId}.mega"
+            android:exported="false"
+            android:grantUriPermissions="true" />
 
         <provider
             android:name=".SearchSuggestionsProvider"

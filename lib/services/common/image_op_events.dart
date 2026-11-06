@@ -6,13 +6,17 @@ class ImageOpEvent extends Equatable {
   final bool success, skipped;
   final String uri;
 
+  // Best gallery: whether the content was overwritten before deletion
+  final bool wiped;
+
   @override
-  List<Object?> get props => [success, skipped, uri];
+  List<Object?> get props => [success, skipped, uri, wiped];
 
   const new({
     required this.success,
     required this.skipped,
     required this.uri,
+    this.wiped = false,
   });
 
   factory fromMap(Map map) {
@@ -21,6 +25,7 @@ class ImageOpEvent extends Equatable {
       success: (map['success'] ?? false) || skipped,
       skipped: skipped,
       uri: map['uri'],
+      wiped: map['wiped'] ?? false,
     );
   }
 }

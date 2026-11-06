@@ -24,6 +24,7 @@ import 'package:aves/widgets/viewer/visual/error.dart';
 import 'package:aves/widgets/viewer/visual/raster.dart';
 import 'package:aves/widgets/viewer/visual/vector.dart';
 import 'package:aves/widgets/viewer/visual/video/cover.dart';
+import 'package:aves/widgets/viewer/visual/video/mega_download_progress.dart';
 import 'package:aves/widgets/viewer/visual/video/subtitle/subtitle.dart';
 import 'package:aves/widgets/viewer/visual/video/swipe_action.dart';
 import 'package:aves/widgets/viewer/visual/video/video_view.dart';
@@ -376,6 +377,7 @@ class _EntryPageViewState extends State<EntryPageView> with TickerProviderStateM
                     ),
                   ),
                 ),
+                if (entry.isMegaContent) MegaDownloadProgress(uri: entry.uri),
               ],
             );
           },
