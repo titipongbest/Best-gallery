@@ -65,3 +65,11 @@ jobs:
           scripts/gen_flavor_play.sh
           scripts/apply_flavor_play.sh
           ./flutterw build apk --profile -t lib/main_play.dart --flavor play
+
+      # profile APK is signed with the debug key and installs alongside the release app
+      - name: Upload APK
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: best-gallery-play-profile-apk
+          path: build/app/outputs/flutter-apk/app-play-profile.apk
+          retention-days: 7
