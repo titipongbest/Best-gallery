@@ -968,7 +968,8 @@ abstract class ImageProvider {
 
                     val sub = dateMillis % 1000
                     if (sub > 0) {
-                        val subString = sub.toString()
+                        // pad to milliseconds, as sub-second value is a decimal fraction (e.g. `5` would mean 500 ms)
+                        val subString = sub.toString().padStart(3, '0')
                         exifInterface.setAttribute(ExifInterface.TAG_SUBSEC_TIME, subString)
                         exifInterface.setAttribute(ExifInterface.TAG_SUBSEC_TIME_ORIGINAL, subString)
                     }
@@ -1001,6 +1002,23 @@ abstract class ImageProvider {
                 defaultExtension = defaultExtension,
                 write = write,
             )
+
+            // align file modified date with the frame date, so that it matches the source video
+            // instead of the time of capture (best effort, as it may not be permitted by the storage)
+            val dateMillis = (exifFields["dateTimeMillis"] as Number?)?.toLong()
+            if (dateMillis != null && dateMillis > 0) {
+                val timeZoneOffsetMinutes = exifFields["timeZoneOffsetMinutes"] as Int?
+                // when the time zone offset is known, the date is the local wall clock time encoded as UTC
+                val epochMillis = if (timeZoneOffsetMinutes != null) dateMillis - timeZoneOffsetMinutes * 60000L else dateMillis
+                try {
+                    if (!File(targetPath).setLastModified(epochMillis)) {
+                        Log.w(LOG_TAG, "failed to set last modified date for path=$targetPath")
+                    }
+                } catch (e: Exception) {
+                    Log.w(LOG_TAG, "failed to set last modified date for path=$targetPath", e)
+                }
+            }
+
             val newFields = scanNewPath(context, targetPath, captureMimeType)
             callback.onSuccess(newFields)
         } catch (ex: Exception) {
