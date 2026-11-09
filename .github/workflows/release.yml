@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - v*
+    # pushing to a release branch tags and releases the version declared in `pubspec.yaml`
+    branches:
+      - "claude/project-thread-p0p0sw"
 
 # Declare default permissions as read only.
 permissions: read-all
@@ -36,6 +39,16 @@ jobs:
 
       # Requires the `KEY_JKS` (base64 of the .jks file) and `KEYSTORE_PASSWORD` secrets.
       # The key alias is `bestgallery` and the key password is the same as the keystore password.
+      - name: Resolve release tag
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="v$(grep -m1 '^version:' pubspec.yaml | sed -E 's/version: *([^+]+).*/\1/')"
+          fi
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "Release tag: $TAG"
+
       - name: Build signed APK
         run: |
           if [ -z "$KEY_JKS" ]; then
@@ -52,7 +65,7 @@ jobs:
           export AVES_GOOGLE_API_KEY="NONE"
           ./flutterw build apk -t lib/main_izzy.dart --flavor izzy
           mkdir outputs
-          cp build/app/outputs/flutter-apk/app-izzy-release.apk "outputs/best-gallery-${GITHUB_REF_NAME}.apk"
+          cp build/app/outputs/flutter-apk/app-izzy-release.apk "outputs/best-gallery-${RELEASE_TAG}.apk"
           rm -f "$AVES_STORE_FILE"
         env:
           KEY_JKS: ${{ secrets.KEY_JKS }}
@@ -64,6 +77,8 @@ jobs:
         uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
         with:
           artifacts: "outputs/*"
-          name: "Best gallery ${{ github.ref_name }}"
+          tag: ${{ env.RELEASE_TAG }}
+          commit: ${{ github.sha }}
+          name: "Best gallery ${{ env.RELEASE_TAG }}"
           generateReleaseNotes: true
           token: ${{ secrets.GITHUB_TOKEN }}
