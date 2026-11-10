@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - v*
+  # manual release: tags `main` (or the selected branch) with `v<pubspec version>`
+  workflow_dispatch:
 
 # Declare default permissions as read only.
 permissions: read-all
@@ -78,4 +80,5 @@ jobs:
           commit: ${{ github.sha }}
           name: "Best gallery ${{ env.RELEASE_TAG }}"
           generateReleaseNotes: true
+          allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
