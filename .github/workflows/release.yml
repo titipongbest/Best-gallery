@@ -4,9 +4,6 @@ on:
   push:
     tags:
       - v*
-    # pushing to a release branch tags and releases the version declared in `pubspec.yaml`
-    branches:
-      - "claude/project-thread-p0p0sw"
 
 # Declare default permissions as read only.
 permissions: read-all
