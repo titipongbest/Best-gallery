@@ -34,6 +34,8 @@ class RasterImageView extends StatefulWidget {
 class _RasterImageViewState extends State<RasterImageView> {
   late Size _displaySize;
   late bool _useTiles;
+  late int _rotationDegrees;
+  late bool _isFlipped;
   bool _isTilingInitialized = false;
   late int _maxSampleSize;
   late double _tileSide;
@@ -71,6 +73,8 @@ class _RasterImageViewState extends State<RasterImageView> {
     super.initState();
     _displaySize = entry.displaySize;
     _useTiles = entry.useTiles;
+    _rotationDegrees = entry.rotationDegrees;
+    _isFlipped = entry.isFlipped;
     _fullImageListener = ImageStreamListener(_onFullImageCompleted);
     if (!_useTiles) _registerFullImage();
   }
@@ -81,10 +85,20 @@ class _RasterImageViewState extends State<RasterImageView> {
 
     final oldViewState = oldWidget.viewStateNotifier.value;
     final viewState = widget.viewStateNotifier.value;
-    if (oldWidget.entry != widget.entry || oldViewState.viewportSize != viewState.viewportSize) {
+    if (oldWidget.entry != widget.entry ||
+        oldViewState.viewportSize != viewState.viewportSize ||
+        _displaySize != entry.displaySize ||
+        _useTiles != entry.useTiles ||
+        _rotationDegrees != entry.rotationDegrees ||
+        _isFlipped != entry.isFlipped) {
+      _displaySize = entry.displaySize;
+      _useTiles = entry.useTiles;
+      _rotationDegrees = entry.rotationDegrees;
+      _isFlipped = entry.isFlipped;
       _isTilingInitialized = false;
       _fullImageLoaded.value = false;
       _unregisterFullImage();
+      if (!_useTiles) _registerFullImage();
     }
   }
 

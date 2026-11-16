@@ -405,8 +405,8 @@ class _EntryPageViewState extends State<EntryPageView> with TickerProviderStateM
       valueListenable: AvesApp.canGestureToOtherApps,
       builder: (context, canGestureToOtherApps, child) {
         return AvesMagnifier(
-          // key includes modified date to refresh when the image is modified by metadata (e.g. rotated)
-          key: Key('${entry.uri}_${entry.pageId}_${entry.dateModifiedMillis}'),
+          // key includes modified date and orientation to refresh when the image is modified by metadata (e.g. rotated)
+          key: Key('${entry.uri}_${entry.pageId}_${entry.dateModifiedMillis}_${entry.rotationDegrees}_${entry.isFlipped}'),
           controller: controller ?? _magnifierController,
           contentSize: displaySize ?? entry.displaySize,
           allowOriginalScaleBeyondRange: !isWallpaperMode,
