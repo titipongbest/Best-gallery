@@ -3,6 +3,7 @@ package deckers.thibault.aves.decoding
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
