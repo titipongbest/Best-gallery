@@ -135,7 +135,11 @@ class ImageByteStreamHandler(private val context: Context, private val arguments
         try {
             var bitmap = withContext(Dispatchers.IO) { target.get() }
             if (needRotationAfterGlide(mimeType, pageId)) {
-                bitmap = applyExifOrientation(context, bitmap, rotationDegrees, isFlipped)
+                bitmap = if (pageId == null) {
+                    BitmapUtils.applyExifOrientationIfNeeded(context, contentAddress.uri, bitmap, rotationDegrees, isFlipped)
+                } else {
+                    applyExifOrientation(context, bitmap, rotationDegrees, isFlipped)
+                }
             }
             if (bitmap != null) {
                 // do not recycle bitmaps fetched from Glide as their lifecycle is unknown
@@ -188,6 +192,8 @@ class ImageByteStreamHandler(private val context: Context, private val arguments
         val uri = (arguments["uri"] as String?)?.toUri()
         val pageId = arguments["pageId"] as Int?
         val sizeBytes = (arguments["sizeBytes"] as Number?)?.toLong()
+        val rotationDegrees = arguments["rotationDegrees"] as Int? ?: 0
+        val isFlipped = arguments["isFlipped"] as Boolean? ?: false
         val sampleSize = arguments["sampleSize"] as Int?
         val x = arguments["regionX"] as Int?
         val y = arguments["regionY"] as Int?
@@ -233,6 +239,8 @@ class ImageByteStreamHandler(private val context: Context, private val arguments
                 regionRect = regionRect,
                 imageWidth = imageWidth,
                 imageHeight = imageHeight,
+                rotationDegrees = rotationDegrees,
+                isFlipped = isFlipped,
                 result = this,
             )
         }

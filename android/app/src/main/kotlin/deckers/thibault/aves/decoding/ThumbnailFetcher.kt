@@ -34,6 +34,7 @@ import deckers.thibault.aves.utils.MimeTypes.needRotationAfterContentResolverThu
 import deckers.thibault.aves.utils.MimeTypes.needRotationAfterGlide
 import deckers.thibault.aves.utils.UriUtils.tryParseId
 import java.io.ByteArrayInputStream
+import java.util.Collections
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -75,11 +76,12 @@ class ThumbnailFetcher internal constructor(
             if (MegaRepository.isMegaUri(context, uri)) {
                 // MEGA provides pre-generated thumbnails & previews, already oriented
                 bitmap = getByMega()
-            } else if (isLowQualityFetch() && !isCustomFetch() && !isFlipped) {
+            } else if (isLowQualityFetch() && !isCustomFetch() && !isFlipped && !editedOrientationUris.contains(uri.toString())) {
                 // Fetch low quality thumbnails when size is not specified.
                 // As of Android 11, the Media Store content resolver may return a thumbnail
                 // that is automatically rotated according to EXIF orientation, but not flipped,
-                // so we skip this step for flipped entries.
+                // so we skip this step for flipped entries and entries whose orientation was edited
+                // (when modified date is preserved, Media Store thumbnail cache may remain stale).
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     bitmap = getByResolver()
                 } else if (StorageUtils.isMediaStoreContentUri(uri)) {
@@ -139,6 +141,16 @@ class ThumbnailFetcher internal constructor(
         }
     }
 
+    private fun hasExpectedOrientation(bitmap: Bitmap?): Boolean {
+        if (bitmap == null || isVideo(mimeType) || bitmap.width == bitmap.height) return true
+        val bounds = BitmapUtils.getRawBounds(context, uri) ?: return true
+        val (rawWidth, rawHeight) = bounds
+        if (rawWidth <= 0 || rawHeight <= 0 || rawWidth == rawHeight) return true
+        val expectedLandscape = (rawWidth > rawHeight) xor (rotationDegrees % 180 == 90)
+        val bitmapLandscape = bitmap.width > bitmap.height
+        return bitmapLandscape == expectedLandscape
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.Q)
     fun getByResolver(): Bitmap? {
         val resolver = context.contentResolver
@@ -146,7 +158,7 @@ class ThumbnailFetcher internal constructor(
         if (needRotationAfterContentResolverThumbnail(mimeType)) {
             bitmap = applyExifOrientation(context, bitmap, rotationDegrees, isFlipped)
         }
-        return bitmap
+        return if (hasExpectedOrientation(bitmap)) bitmap else null
     }
 
     private fun getByMega(): Bitmap? {
@@ -175,7 +187,7 @@ class ThumbnailFetcher internal constructor(
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && bitmap != null) {
                 bitmap = applyExifOrientation(context, bitmap, rotationDegrees, isFlipped)
             }
-            bitmap
+            if (hasExpectedOrientation(bitmap)) bitmap else null
         }
     }
 
@@ -198,7 +210,11 @@ class ThumbnailFetcher internal constructor(
         return try {
             var bitmap = target.get()
             if (needRotationAfterGlide(mimeType, pageId)) {
-                bitmap = applyExifOrientation(context, bitmap, rotationDegrees, isFlipped)
+                bitmap = if (pageId == null) {
+                    BitmapUtils.applyExifOrientationIfNeeded(context, uri, bitmap, rotationDegrees, isFlipped)
+                } else {
+                    applyExifOrientation(context, bitmap, rotationDegrees, isFlipped)
+                }
             }
             bitmap
         } finally {
@@ -211,5 +227,10 @@ class ThumbnailFetcher internal constructor(
         private const val BITMAP_SIZE_DANGER_THRESHOLD = 20 * (1 shl 20) // MiB
         private const val DEFAULT_SIZE_DIP: Double = 64.0
         private const val RESCALE_REDUCTION_THRESHOLD: Float = .15f
+        private val editedOrientationUris: MutableSet<String> = Collections.synchronizedSet(HashSet())
+
+        fun markOrientationEdited(uri: Uri) {
+            editedOrientationUris.add(uri.toString())
+        }
     }
 }

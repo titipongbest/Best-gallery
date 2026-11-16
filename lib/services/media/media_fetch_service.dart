@@ -242,6 +242,8 @@ class PlatformMediaFetchService implements MediaFetchService {
       'uri': request.uri,
       'pageId': request.pageId,
       'sizeBytes': request.sizeBytes,
+      'rotationDegrees': request.rotationDegrees,
+      'isFlipped': request.isFlipped,
       'sampleSize': request.sampleSize,
       'regionX': request.regionRect.left,
       'regionY': request.regionRect.top,

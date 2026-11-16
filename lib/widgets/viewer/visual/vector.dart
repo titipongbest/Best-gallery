@@ -31,6 +31,7 @@ class VectorImageView extends StatefulWidget {
 
 class _VectorImageViewState extends State<VectorImageView> {
   late Size _displaySize;
+  Size? _viewportSize;
   bool _isTilingInitialized = false;
   late double _minScale;
   late double _tileSide;
@@ -59,6 +60,7 @@ class _VectorImageViewState extends State<VectorImageView> {
   void initState() {
     super.initState();
     _displaySize = entry.displaySize;
+    _viewportSize = viewState.viewportSize;
     _fullImageListener = ImageStreamListener(_onFullImageCompleted);
   }
 
@@ -66,9 +68,10 @@ class _VectorImageViewState extends State<VectorImageView> {
   void didUpdateWidget(covariant VectorImageView oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final oldViewState = oldWidget.viewStateNotifier.value;
     final viewState = widget.viewStateNotifier.value;
-    if (oldWidget.entry != widget.entry || oldViewState.viewportSize != viewState.viewportSize) {
+    if (oldWidget.entry != widget.entry || _viewportSize != viewState.viewportSize || _displaySize != entry.displaySize) {
+      _displaySize = entry.displaySize;
+      _viewportSize = viewState.viewportSize;
       _isTilingInitialized = false;
       _fullImageLoaded.value = false;
       _unregisterFullImage();
@@ -110,10 +113,13 @@ class _VectorImageViewState extends State<VectorImageView> {
       builder: (context, viewState, child) {
         final viewportSize = viewState.viewportSize;
         final viewportSized = viewportSize?.isEmpty == false;
-        if (viewportSized && !_isTilingInitialized) {
+        if (viewportSized && (!_isTilingInitialized || _viewportSize != viewportSize)) {
+          final wasInitialized = _isTilingInitialized;
+          _viewportSize = viewportSize;
           _initTiling(
             viewportSize: viewportSize!,
             devicePixelRatio: devicePixelRatio,
+            registerFullImage: !wasInitialized,
           );
         }
 
@@ -134,6 +140,7 @@ class _VectorImageViewState extends State<VectorImageView> {
   void _initTiling({
     required Size viewportSize,
     required double devicePixelRatio,
+    bool registerFullImage = true,
   }) {
     _tileSide = _displaySize.longestSide;
     // scale for initial state `contained`
@@ -141,7 +148,7 @@ class _VectorImageViewState extends State<VectorImageView> {
     _minScale = _imageScaleForViewScale(scale: containedScale, devicePixelRatio: devicePixelRatio);
 
     _isTilingInitialized = true;
-    _registerFullImage();
+    if (registerFullImage) _registerFullImage();
   }
 
   Widget _buildLoading() {
@@ -156,7 +163,7 @@ class _VectorImageViewState extends State<VectorImageView> {
             aspectRatio: entry.displayAspectRatio,
             child: Image(
               image: thumbnailProvider,
-              fit: BoxFit.fill,
+              fit: BoxFit.contain,
             ),
           ),
         );
@@ -342,7 +349,7 @@ class _RegionTileState extends State<_RegionTile> {
   @override
   void didUpdateWidget(covariant _RegionTile oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.entry != widget.entry || oldWidget.tileRect != widget.tileRect || oldWidget.scale != widget.scale || oldWidget.scale != widget.scale) {
+    if (oldWidget.entry != widget.entry || oldWidget.tileRect != widget.tileRect || oldWidget.regionRect != widget.regionRect || oldWidget.scale != widget.scale) {
       _unregisterWidget(oldWidget);
       _registerWidget(widget);
     }

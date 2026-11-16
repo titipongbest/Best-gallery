@@ -127,8 +127,24 @@ class ExoVideoController extends AvesVideoController {
   }
 
   @override
-  void onVisualChanged() {
-    // TODO TLAD
+  void onVisualChanged() => unawaited(_reinitOnVisualChange());
+
+  Future<void> _reinitOnVisualChange() async {
+    final position = currentPosition;
+    final wasPlaying = _controller.value.isPlaying;
+    _controller.removeListener(_onControllerStateChanged);
+    await _controller.dispose();
+    _status = .idle;
+    _statusStreamController.add(_status);
+    _initController();
+    _controller.addListener(_onControllerStateChanged);
+    await _init();
+    if (position > 0) {
+      await seekTo(position);
+    }
+    if (wasPlaying) {
+      await play();
+    }
   }
 
   @override

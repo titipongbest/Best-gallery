@@ -57,7 +57,11 @@ class EntryPageView extends StatefulWidget {
 class _EntryPageViewState extends State<EntryPageView> with TickerProviderStateMixin {
   late ValueNotifier<ViewState> _viewStateNotifier;
   late AvesMagnifierController _magnifierController;
+  int? _dateModifiedMillis;
+  late int _rotationDegrees;
+  late bool _isFlipped;
   final Set<StreamSubscription> _subscriptions = {};
+  final Set<StreamSubscription> _magnifierSubscriptions = {};
   final ValueNotifier<Widget?> _actionFeedbackChildNotifier = ValueNotifier(null);
   OverlayEntry? _actionFeedbackOverlayEntry;
 
@@ -93,10 +97,15 @@ class _EntryPageViewState extends State<EntryPageView> with TickerProviderStateM
 
   void _registerWidget(EntryPageView widget) {
     final entry = widget.pageEntry;
+    _dateModifiedMillis = entry.dateModifiedMillis;
+    _rotationDegrees = entry.rotationDegrees;
+    _isFlipped = entry.isFlipped;
+    final visualChangeNotifier = entry.visualChangeNotifier;
+    if (!visualChangeNotifier.isDisposed) {
+      visualChangeNotifier.addListener(_onEntryVisualChanged);
+    }
     _viewStateNotifier = context.read<ViewStateConductor>().getOrCreateController(entry).viewStateNotifier;
-    _magnifierController = AvesMagnifierController();
-    _subscriptions.add(_magnifierController.stateStream.listen(_onViewStateChanged));
-    _subscriptions.add(_magnifierController.scaleBoundariesStream.listen(_onViewScaleBoundariesChanged));
+    _initMagnifierController();
     if (entry.isVideo) {
       _subscriptions.add(mediaSessionService.mediaCommands.listen(_onMediaCommand));
     }
@@ -113,11 +122,52 @@ class _EntryPageViewState extends State<EntryPageView> with TickerProviderStateM
   }
 
   void _unregisterWidget(EntryPageView oldWidget) {
+    oldWidget.pageEntry.visualChangeNotifier.removeListener(_onEntryVisualChanged);
     viewerController.stopAutopilotAnimation(vsync: this);
-    _magnifierController.dispose();
+    _disposeMagnifierController();
     _subscriptions
       ..forEach((sub) => sub.cancel())
       ..clear();
+  }
+
+  void _initMagnifierController() {
+    _magnifierController = AvesMagnifierController();
+    _magnifierSubscriptions.add(_magnifierController.stateStream.listen(_onViewStateChanged));
+    _magnifierSubscriptions.add(_magnifierController.scaleBoundariesStream.listen(_onViewScaleBoundariesChanged));
+  }
+
+  void _disposeMagnifierController() {
+    _magnifierSubscriptions
+      ..forEach((sub) => sub.cancel())
+      ..clear();
+    _magnifierController.dispose();
+  }
+
+  void _onEntryVisualChanged() {
+    if (!mounted) return;
+    if (entry.dateModifiedMillis != _dateModifiedMillis ||
+        entry.rotationDegrees != _rotationDegrees ||
+        entry.isFlipped != _isFlipped) {
+      _dateModifiedMillis = entry.dateModifiedMillis;
+      _rotationDegrees = entry.rotationDegrees;
+      _isFlipped = entry.isFlipped;
+
+      final viewportSize = _viewStateNotifier.value.viewportSize ?? Size.zero;
+      final contentSize = entry.displaySize;
+      final newScale = viewportSize.isEmpty || contentSize.isEmpty
+          ? _viewStateNotifier.value.scale
+          : ScaleLevel.scaleForContained(viewportSize, contentSize);
+      _viewStateNotifier.value = ViewState(
+        position: Offset.zero,
+        scale: newScale,
+        viewportSize: viewportSize,
+        contentSize: contentSize,
+      );
+
+      _disposeMagnifierController();
+      _initMagnifierController();
+      setState(() {});
+    }
   }
 
   @override

@@ -2,12 +2,15 @@ package deckers.thibault.aves.utils
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ColorSpace
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.TransformationUtils
 import deckers.thibault.aves.metadata.Metadata.getExifCode
+import deckers.thibault.aves.storage.StorageUtils
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.ByteArrayOutputStream
@@ -181,6 +184,56 @@ object BitmapUtils {
             Log.e(LOG_TAG, "failed to get bytes from bitmap", e)
         }
         return null
+    }
+
+    fun getRawBounds(context: Context, uri: Uri): Pair<Int, Int>? {
+        return try {
+            StorageUtils.openInputStream(context, uri)?.use { input ->
+                val options = BitmapFactory.Options().apply {
+                    inJustDecodeBounds = true
+                }
+                BitmapFactory.decodeStream(input, null, options)
+                val w = options.outWidth
+                val h = options.outHeight
+                if (w > 0 && h > 0) Pair(w, h) else null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun applyExifOrientationIfNeeded(
+        context: Context,
+        uri: Uri,
+        bitmap: Bitmap?,
+        rotationDegrees: Int?,
+        isFlipped: Boolean?,
+    ): Bitmap? {
+        if (bitmap == null || rotationDegrees == null || isFlipped == null) return bitmap
+        if (rotationDegrees == 0 && !isFlipped) return bitmap
+        if (rotationDegrees % 180 == 90 && bitmap.width != bitmap.height) {
+            val bounds = getRawBounds(context, uri)
+            if (bounds != null) {
+                val (rawWidth, rawHeight) = bounds
+                if (rawWidth > 0 && rawHeight > 0 && rawWidth != rawHeight) {
+                    val rawIsLandscape = rawWidth > rawHeight
+                    val bitmapIsLandscape = bitmap.width > bitmap.height
+                    if (bitmapIsLandscape != rawIsLandscape) {
+                        // already rotated by decoder (e.g. ImageDecoder for PNG/WEBP/AVIF)
+                        return bitmap
+                    }
+                }
+            }
+        }
+        return applyExifOrientation(context, bitmap, rotationDegrees, isFlipped)
+    }
+
+    fun undoExifOrientation(context: Context, bitmap: Bitmap?, rotationDegrees: Int?, isFlipped: Boolean?): Bitmap? {
+        if (bitmap == null || rotationDegrees == null || isFlipped == null) return bitmap
+        if (rotationDegrees == 0 && !isFlipped) return bitmap
+        val normalized = ((rotationDegrees % 360) + 360) % 360
+        val inverseRotation = if (isFlipped || normalized % 180 == 0) normalized else (360 - normalized) % 360
+        return applyExifOrientation(context, bitmap, inverseRotation, isFlipped)
     }
 
     fun applyExifOrientation(context: Context, bitmap: Bitmap?, rotationDegrees: Int?, isFlipped: Boolean?): Bitmap? {

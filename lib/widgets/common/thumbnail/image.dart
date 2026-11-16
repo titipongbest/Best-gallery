@@ -47,6 +47,7 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
   _ProviderStream? _currentProviderStream;
   ImageInfo? _lastImageInfo;
   Object? _lastException;
+  bool _skipLowQuality = false;
   late final ImageStreamListener _streamListener;
 
   AvesEntry get entry => widget.entry;
@@ -66,8 +67,13 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
   void didUpdateWidget(covariant ThumbnailImage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.entry != entry) {
+      _skipLowQuality = false;
       _unregisterWidget(oldWidget);
       _registerWidget(widget);
+    } else if (oldWidget.extent != extent || oldWidget.isMosaic != isMosaic) {
+      _pauseProvider();
+      _initProvider();
+      setState(() {});
     }
   }
 
@@ -101,7 +107,7 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
 
     final highQuality = entry.getThumbnail(extent: extent);
     ThumbnailProvider? lowQuality;
-    if (widget.progressive && !entry.isSvg) {
+    if (!_skipLowQuality && widget.progressive && !entry.isSvg) {
       if (entry.isVideo) {
         // previously fetched thumbnail
         final cached = entry.bestCachedThumbnail;
@@ -161,7 +167,20 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
     if (currentImageInfo == null) return true;
     final currentImage = currentImageInfo.image;
     final sizedThreshold = extent * widget.devicePixelRatio;
-    return sizedThreshold > min(currentImage.width, currentImage.height);
+    if (sizedThreshold > min(currentImage.width, currentImage.height)) {
+      return true;
+    }
+    // reload if cached/platform thumbnail aspect ratio disagrees with entry's display aspect ratio
+    // (e.g. stale MediaStore thumbnail after rotation when modified date is preserved)
+    final imageHeight = currentImage.height;
+    if (imageHeight > 0) {
+      final imageAspectRatio = currentImage.width / imageHeight;
+      final expectedAspectRatio = entry.displayAspectRatio;
+      if (expectedAspectRatio > 0 && ((imageAspectRatio / expectedAspectRatio) - 1).abs() > 0.1) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void _pauseProvider() async {
@@ -316,7 +335,9 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
   }
 
   // when the entry image itself changed (e.g. after rotation)
-  void _onVisualChanged() async {
+  void _onVisualChanged() {
+    // skip low-quality platform thumbnail cache, as modified date may have been preserved
+    _skipLowQuality = true;
     // rebuild to refresh the thumbnails
     _pauseProvider();
     _initProvider();

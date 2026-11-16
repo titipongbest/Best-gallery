@@ -17,6 +17,7 @@ import com.bumptech.glide.request.FutureTarget
 import com.commonsware.cwac.document.DocumentFileCompat
 import deckers.thibault.aves.MainActivity
 import deckers.thibault.aves.MainActivity.Companion.SCOPED_STORAGE_PERMISSION_REQUEST
+import deckers.thibault.aves.decoding.ThumbnailFetcher
 import deckers.thibault.aves.glide.AvesAppGlideModule
 import deckers.thibault.aves.metadata.ExifInterfaceHelper
 import deckers.thibault.aves.metadata.ExifInterfaceHelper.getSafeDateMillis
@@ -836,7 +837,11 @@ abstract class ImageProvider {
 
                 var bitmap = withContext(Dispatchers.IO) { target.get() }
                 if (needRotationAfterGlide) {
-                    bitmap = BitmapUtils.applyExifOrientation(context, bitmap, rotationDegrees, sourceEntry.isFlipped)
+                    bitmap = if (pageId == null) {
+                        BitmapUtils.applyExifOrientationIfNeeded(context, sourceUri, bitmap, rotationDegrees, sourceEntry.isFlipped)
+                    } else {
+                        BitmapUtils.applyExifOrientation(context, bitmap, rotationDegrees, sourceEntry.isFlipped)
+                    }
                 }
                 bitmap ?: throw Exception("failed to get image for $contentAddress")
 
@@ -1786,6 +1791,7 @@ abstract class ImageProvider {
 
         if (success) {
             restoreDateModified(contentAddress.path, originalDateModifiedMillis)
+            ThumbnailFetcher.markOrientationEdited(contentAddress.uri)
             scanPostMetadataEdit(context, contentAddress, newFields, callback)
         }
     }

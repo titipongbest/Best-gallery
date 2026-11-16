@@ -36,6 +36,7 @@ class _RasterImageViewState extends State<RasterImageView> {
   late bool _useTiles;
   late int _rotationDegrees;
   late bool _isFlipped;
+  Size? _viewportSize;
   bool _isTilingInitialized = false;
   late int _maxSampleSize;
   late double _tileSide;
@@ -75,6 +76,7 @@ class _RasterImageViewState extends State<RasterImageView> {
     _useTiles = entry.useTiles;
     _rotationDegrees = entry.rotationDegrees;
     _isFlipped = entry.isFlipped;
+    _viewportSize = viewState.viewportSize;
     _fullImageListener = ImageStreamListener(_onFullImageCompleted);
     if (!_useTiles) _registerFullImage();
   }
@@ -83,10 +85,9 @@ class _RasterImageViewState extends State<RasterImageView> {
   void didUpdateWidget(covariant RasterImageView oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final oldViewState = oldWidget.viewStateNotifier.value;
     final viewState = widget.viewStateNotifier.value;
     if (oldWidget.entry != widget.entry ||
-        oldViewState.viewportSize != viewState.viewportSize ||
+        _viewportSize != viewState.viewportSize ||
         _displaySize != entry.displaySize ||
         _useTiles != entry.useTiles ||
         _rotationDegrees != entry.rotationDegrees ||
@@ -95,6 +96,7 @@ class _RasterImageViewState extends State<RasterImageView> {
       _useTiles = entry.useTiles;
       _rotationDegrees = entry.rotationDegrees;
       _isFlipped = entry.isFlipped;
+      _viewportSize = viewState.viewportSize;
       _isTilingInitialized = false;
       _fullImageLoaded.value = false;
       _unregisterFullImage();
@@ -135,7 +137,11 @@ class _RasterImageViewState extends State<RasterImageView> {
       builder: (context, viewState, child) {
         final viewportSize = viewState.viewportSize;
         final viewportSized = viewportSize?.isEmpty == false;
-        if (viewportSized && _useTiles && !_isTilingInitialized) _initTiling(viewportSize!);
+        if (viewportSized && _useTiles && (!_isTilingInitialized || _viewportSize != viewportSize)) {
+          final wasInitialized = _isTilingInitialized;
+          _viewportSize = viewportSize;
+          _initTiling(viewportSize!, registerFullImage: !wasInitialized);
+        }
 
         final magnifierScale = viewState.scale!;
         return SizedBox.fromSize(
@@ -171,7 +177,7 @@ class _RasterImageViewState extends State<RasterImageView> {
     );
   }
 
-  void _initTiling(Size viewportSize) {
+  void _initTiling(Size viewportSize, {bool registerFullImage = true}) {
     final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
     _tileSide = viewportSize.shortestSide * devicePixelRatio / _tilesByShortestSide;
     // scale for initial state `contained`
@@ -189,7 +195,7 @@ class _RasterImageViewState extends State<RasterImageView> {
         ..translateByDouble(-_displaySize.width / 2.0, -_displaySize.height / 2.0, 0, 1);
     }
     _isTilingInitialized = true;
-    _registerFullImage();
+    if (registerFullImage) _registerFullImage();
   }
 
   Widget _buildLoading() {
@@ -204,7 +210,7 @@ class _RasterImageViewState extends State<RasterImageView> {
             aspectRatio: entry.displayAspectRatio,
             child: Image(
               image: thumbnailProvider,
-              fit: BoxFit.fill,
+              fit: BoxFit.contain,
             ),
           ),
         );
@@ -428,6 +434,8 @@ class _RegionTile extends StatefulWidget {
 
 class _RegionTileState extends State<_RegionTile> {
   late RegionProvider _provider;
+  late int _rotationDegrees;
+  late bool _isFlipped;
 
   AvesEntry get entry => widget.entry;
 
@@ -440,7 +448,12 @@ class _RegionTileState extends State<_RegionTile> {
   @override
   void didUpdateWidget(covariant _RegionTile oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.entry != widget.entry || oldWidget.tileRect != widget.tileRect || oldWidget.sampleSize != widget.sampleSize || oldWidget.sampleSize != widget.sampleSize) {
+    if (oldWidget.entry != widget.entry ||
+        oldWidget.tileRect != widget.tileRect ||
+        oldWidget.regionRect != widget.regionRect ||
+        oldWidget.sampleSize != widget.sampleSize ||
+        _rotationDegrees != entry.rotationDegrees ||
+        _isFlipped != entry.isFlipped) {
       _unregisterWidget(oldWidget);
       _registerWidget(widget);
     }
@@ -453,6 +466,8 @@ class _RegionTileState extends State<_RegionTile> {
   }
 
   void _registerWidget(_RegionTile widget) {
+    _rotationDegrees = entry.rotationDegrees;
+    _isFlipped = entry.isFlipped;
     _initProvider();
   }
 
@@ -472,19 +487,19 @@ class _RegionTileState extends State<_RegionTile> {
   @override
   Widget build(BuildContext context) {
     final tileRect = widget.tileRect;
+    final quarterTurns = entry.rotationDegrees ~/ 90;
+    final rotated = quarterTurns.isOdd;
 
     Widget child = Image(
       image: _provider,
-      width: tileRect.width,
-      height: tileRect.height,
+      width: rotated ? tileRect.height : tileRect.width,
+      height: rotated ? tileRect.width : tileRect.height,
       fit: BoxFit.fill,
       filterQuality: widget.quality,
     );
 
     // apply EXIF orientation
-    final quarterTurns = entry.rotationDegrees ~/ 90;
     if (entry.isFlipped) {
-      final rotated = quarterTurns % 2 != 0;
       final w = (rotated ? tileRect.height : tileRect.width) / 2.0;
       final h = (rotated ? tileRect.width : tileRect.height) / 2.0;
       final flipper = Matrix4.identity()

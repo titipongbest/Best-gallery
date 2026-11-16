@@ -73,7 +73,17 @@ extension ExtraAvesEntryImages on AvesEntry {
 
   bool _isReady(Object providerKey) => imageCache.statusForKey(providerKey).keepAlive;
 
-  List<ThumbnailProvider> get cachedThumbnails => EntryCache.getThumbnailProviderKeys(uri).where(_isReady).map(ThumbnailProvider.new).toList();
+  List<ThumbnailProvider> get cachedThumbnails => EntryCache.getThumbnailProviderKeys(uri)
+      .where(
+        (key) =>
+            key.pageId == pageId &&
+            key.rotationDegrees == rotationDegrees &&
+            key.isFlipped == isFlipped &&
+            key.dateModifiedMillis == (dateModifiedMillis ?? -1),
+      )
+      .where(_isReady)
+      .map(ThumbnailProvider.new)
+      .toList();
 
   ThumbnailProvider get bestCachedThumbnail => cachedThumbnails.firstOrNull ?? getThumbnail();
 

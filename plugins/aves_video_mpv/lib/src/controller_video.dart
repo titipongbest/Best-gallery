@@ -263,7 +263,10 @@ class MpvVideoController(
   }
 
   @override
-  void onVisualChanged() => _init(startMillis: currentPosition);
+  void onVisualChanged() {
+    sarNotifier.value = null;
+    _init(startMillis: currentPosition);
+  }
 
   void _onPlayerLog(PlayerLog log) {
     debugPrint('libmpv log: $log');

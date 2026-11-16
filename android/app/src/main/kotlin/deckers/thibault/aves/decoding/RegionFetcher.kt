@@ -26,6 +26,7 @@ import deckers.thibault.aves.utils.MimeTypes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -46,6 +47,8 @@ class RegionFetcher internal constructor(
         regionRect: Rect,
         imageWidth: Int,
         imageHeight: Int,
+        rotationDegrees: Int = 0,
+        isFlipped: Boolean = false,
         requestKey: Pair<Uri, Int?> = Pair(contentAddress.uri, contentAddress.pageId),
         result: ByteSink,
     ) {
@@ -55,7 +58,13 @@ class RegionFetcher internal constructor(
 
         if (pageId != null && MultiPageImage.isSupported(mimeType)) {
             // use export for requested page
-            val exportUri = exportUris.getOrPut(requestKey) { createTemporaryExport(contentAddress) }
+            val exportUri = getOrCreateTemporaryExport(
+                contentAddress = contentAddress,
+                imageWidth = imageWidth,
+                imageHeight = imageHeight,
+                rotationDegrees = rotationDegrees,
+                isFlipped = isFlipped,
+            )
             fetch(
                 ContentAddress(
                     mimeType = EXPORT_MIME_TYPE,
@@ -69,6 +78,8 @@ class RegionFetcher internal constructor(
                 regionRect = regionRect,
                 imageWidth = imageWidth,
                 imageHeight = imageHeight,
+                rotationDegrees = rotationDegrees,
+                isFlipped = isFlipped,
                 requestKey = requestKey,
                 result = result,
             )
@@ -141,7 +152,13 @@ class RegionFetcher internal constructor(
             if (EXPORT_MIME_TYPE != mimeType) {
                 // retry with export on failure,
                 // as some formats are not fully supported by `BitmapRegionDecoder`
-                val exportUri = exportUris.getOrPut(requestKey) { createTemporaryExport(contentAddress) }
+                val exportUri = getOrCreateTemporaryExport(
+                    contentAddress = contentAddress,
+                    imageWidth = imageWidth,
+                    imageHeight = imageHeight,
+                    rotationDegrees = rotationDegrees,
+                    isFlipped = isFlipped,
+                )
                 fetch(
                     ContentAddress(
                         mimeType = EXPORT_MIME_TYPE,
@@ -155,6 +172,8 @@ class RegionFetcher internal constructor(
                     regionRect = regionRect,
                     imageWidth = imageWidth,
                     imageHeight = imageHeight,
+                    rotationDegrees = rotationDegrees,
+                    isFlipped = isFlipped,
                     requestKey = requestKey,
                     result = result,
                 )
@@ -165,7 +184,51 @@ class RegionFetcher internal constructor(
         }
     }
 
-    private suspend fun createTemporaryExport(contentAddress: ContentAddress): Uri {
+    private suspend fun getOrCreateTemporaryExport(
+        contentAddress: ContentAddress,
+        imageWidth: Int,
+        imageHeight: Int,
+        rotationDegrees: Int,
+        isFlipped: Boolean,
+    ): Uri {
+        val exportKey = ExportKey(
+            uri = contentAddress.uri,
+            pageId = contentAddress.pageId,
+            rotationDegrees = rotationDegrees,
+            isFlipped = isFlipped,
+        )
+        exportLock.withLock {
+            exportUris[exportKey]?.let { return it }
+        }
+        val created = createTemporaryExport(
+            contentAddress = contentAddress,
+            imageWidth = imageWidth,
+            imageHeight = imageHeight,
+            rotationDegrees = rotationDegrees,
+            isFlipped = isFlipped,
+        )
+        var duplicateFile: File? = null
+        val resultUri = exportLock.withLock {
+            val existing = exportUris[exportKey]
+            if (existing != null) {
+                duplicateFile = created.path?.let(::File)
+                existing
+            } else {
+                exportUris[exportKey] = created
+                created
+            }
+        }
+        duplicateFile?.delete()
+        return resultUri
+    }
+
+    private suspend fun createTemporaryExport(
+        contentAddress: ContentAddress,
+        imageWidth: Int,
+        imageHeight: Int,
+        rotationDegrees: Int,
+        isFlipped: Boolean,
+    ): Uri {
         val exportFormat = EXPORT_FORMAT
         Log.d(LOG_TAG, "create export for $contentAddress exportFormat=$exportFormat")
 
@@ -176,14 +239,29 @@ class RegionFetcher internal constructor(
             .submit()
 
         try {
-            val bitmap = withContext(Dispatchers.IO) { target.get() }
+            var bitmap = withContext(Dispatchers.IO) { target.get() }
+            // Keep exported pixels in raw unrotated coordinates (matching imageWidth x imageHeight)
+            // because Flutter's region tiles apply EXIF rotation/flip on display.
+            val mimeType = contentAddress.mimeType
+            val pageId = contentAddress.pageId
+            val isCustomDecoded = (pageId != null && MultiPageImage.isSupported(mimeType)) || mimeType == MimeTypes.TIFF
+            if (!isCustomDecoded && (rotationDegrees != 0 || isFlipped)) {
+                val shouldUndo = if (rotationDegrees % 180 == 90 && imageWidth > 0 && imageHeight > 0 && imageWidth != imageHeight && bitmap.width != bitmap.height) {
+                    (bitmap.width > bitmap.height) != (imageWidth > imageHeight)
+                } else {
+                    !MimeTypes.needRotationAfterGlide(mimeType, pageId)
+                }
+                if (shouldUndo) {
+                    bitmap = BitmapUtils.undoExifOrientation(context, bitmap, rotationDegrees, isFlipped) ?: bitmap
+                }
+            }
+
             val tempFile = StorageUtils.createTempFile(context).apply {
                 outputStream().use { output ->
                     val encodedExport = bitmap.compress(exportFormat, 100, output)
                     if (!encodedExport) {
                         Log.w(LOG_TAG, "failed export via encoded bytes for $contentAddress exportFormat=$exportFormat, with bitmap=${bitmap.describe()}")
 
-                        val mimeType = contentAddress.mimeType
                         val decodedBytes = BitmapUtils.getBytes(bitmap, recycle = false, decoded = true, applyGainmap = false, mimeType = mimeType)
                         if (decodedBytes != null) {
                             val exportBitmap = createBitmap(bitmap.width, bitmap.height, PREFERRED_CONFIG)
@@ -202,6 +280,13 @@ class RegionFetcher internal constructor(
         }
     }
 
+    private data class ExportKey(
+        val uri: Uri,
+        val pageId: Int?,
+        val rotationDegrees: Int,
+        val isFlipped: Boolean,
+    )
+
     private data class DecoderRef(
         val requestKey: Pair<Uri, Int?>,
         val decoder: BitmapRegionDecoder,
@@ -214,9 +299,10 @@ class RegionFetcher internal constructor(
         private const val EXPORT_MIME_TYPE = MimeTypes.JPEG
         private val EXPORT_FORMAT = Bitmap.CompressFormat.JPEG
         private val decoderPool = ArrayList<DecoderRef>()
-        private val exportUris = HashMap<Pair<Uri, Int?>, Uri>()
+        private val exportUris = HashMap<ExportKey, Uri>()
 
         private val poolLock = ReentrantLock()
+        private val exportLock = ReentrantLock()
 
         private fun getOrCreateDecoder(context: Context, uri: Uri, requestKey: Pair<Uri, Int?>): BitmapRegionDecoder? {
             poolLock.withLock {
@@ -242,6 +328,12 @@ class RegionFetcher internal constructor(
         fun clearDecoders() {
             poolLock.withLock {
                 trimDecoderPool(0)
+            }
+            exportLock.withLock {
+                exportUris.values.forEach { exportUri ->
+                    exportUri.path?.let { File(it).delete() }
+                }
+                exportUris.clear()
             }
         }
 

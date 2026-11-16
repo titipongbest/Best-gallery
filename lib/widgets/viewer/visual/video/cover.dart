@@ -31,6 +31,7 @@ class const VideoCover({
 class _VideoCoverState extends State<VideoCover> {
   ImageStream? _videoCoverStream;
   late ImageStreamListener _videoCoverStreamListener;
+  late ImageProvider _videoCoverProvider;
   final ValueNotifier<ImageInfo?> _videoCoverInfoNotifier = ValueNotifier(null);
 
   AvesMagnifierController? _dismissedCoverMagnifierController;
@@ -63,7 +64,7 @@ class _VideoCoverState extends State<VideoCover> {
   void didUpdateWidget(covariant VideoCover oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.pageEntry != widget.pageEntry) {
+    if (oldWidget.pageEntry != widget.pageEntry || _videoCoverProvider != videoCoverUriImage) {
       _unregisterWidget(oldWidget);
       _registerWidget(widget);
     }
@@ -78,15 +79,27 @@ class _VideoCoverState extends State<VideoCover> {
   }
 
   void _registerWidget(VideoCover widget) {
+    final visualChangeNotifier = widget.pageEntry.visualChangeNotifier;
+    if (!visualChangeNotifier.isDisposed) {
+      visualChangeNotifier.addListener(_onVisualChanged);
+    }
+    _videoCoverProvider = videoCoverUriImage;
     _videoCoverStreamListener = ImageStreamListener((image, _) => _videoCoverInfoNotifier.value = image);
-    _videoCoverStream = videoCoverUriImage.resolve(ImageConfiguration.empty);
+    _videoCoverStream = _videoCoverProvider.resolve(ImageConfiguration.empty);
     _videoCoverStream!.addListener(_videoCoverStreamListener);
   }
 
   void _unregisterWidget(VideoCover oldWidget) {
+    oldWidget.pageEntry.visualChangeNotifier.removeListener(_onVisualChanged);
     _videoCoverStream?.removeListener(_videoCoverStreamListener);
     _videoCoverStream = null;
     _videoCoverInfoNotifier.value = null;
+  }
+
+  void _onVisualChanged() {
+    if (!mounted) return;
+    _unregisterWidget(widget);
+    _registerWidget(widget);
   }
 
   @override
