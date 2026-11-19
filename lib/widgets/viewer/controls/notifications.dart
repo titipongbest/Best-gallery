@@ -88,6 +88,9 @@ class const SelectFilterNotification(final CollectionFilter filter) extends Equa
 }
 
 @immutable
+class ShowInAllCollectionNotification extends EquatableNotification;
+
+@immutable
 class const DecomposeFilterNotification(final CollectionFilter filter) extends EquatableNotification {
   @override
   List<Object?> get props => [filter];

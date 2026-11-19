@@ -560,6 +560,8 @@ class _EntryViewerStackState extends State<EntryViewerStack> with EntryViewContr
   bool _handleNotification(Notification notification) {
     if (notification is SelectFilterNotification) {
       _goToCollection(notification.filter);
+    } else if (notification is ShowInAllCollectionNotification) {
+      _goToAllCollection();
     } else if (notification is CastNotification) {
       _cast(notification.enabled);
     } else if (notification is FullImageLoadedNotification) {
@@ -690,6 +692,31 @@ class _EntryViewerStackState extends State<EntryViewerStack> with EntryViewContr
             source: baseCollection.source,
             filters: {...baseCollection.filters, filter},
             highlightTest: uri != null ? (entry) => entry.uri == uri : null,
+          ),
+        ),
+        (route) => false,
+      ),
+    );
+  }
+
+  Future<void> _goToAllCollection() async {
+    final isMainMode = context.read<ValueNotifier<AppMode>>().value == .main;
+    if (!isMainMode) return;
+
+    final baseCollection = collection;
+    if (baseCollection == null) return;
+
+    await _onLeave();
+    if (!mounted) return;
+    final uri = entryNotifier.value?.uri;
+    unawaited(
+      Navigator.maybeOf(context)?.pushAndRemoveUntil(
+        MaterialPageRoute(
+          settings: const RouteSettings(name: CollectionPage.routeName),
+          builder: (context) => CollectionPage(
+            source: baseCollection.source,
+            filters: null,
+            highlightTest: uri != null ? (entry) => entry.uri == uri || (entry.stackedEntries?.any((sub) => sub.uri == uri) ?? false) : null,
           ),
         ),
         (route) => false,
