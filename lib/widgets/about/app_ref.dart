@@ -9,6 +9,7 @@ import 'package:aves/widgets/common/identity/aves_logo.dart';
 import 'package:material_ui/material_ui.dart';
 
 class AppReference extends StatelessWidget {
+  static const bestGalleryGithub = 'https://github.com/titipongbest/Best-gallery';
   static const avesGithub = 'https://github.com/deckerst/aves';
   static const avesFaq = '$avesGithub/wiki/FAQ';
 
@@ -74,7 +75,7 @@ class AppReference extends StatelessWidget {
           size: 24,
         ),
         text: 'GitHub',
-        urlString: AppReference.avesGithub,
+        urlString: AppReference.bestGalleryGithub,
       ),
       LinkChip(
         leading: const Icon(
@@ -82,7 +83,7 @@ class AppReference extends StatelessWidget {
           size: 22,
         ),
         text: l10n.aboutLinkLicense,
-        urlString: '${AppReference.avesGithub}/blob/main/LICENSE',
+        urlString: '${AppReference.bestGalleryGithub}/blob/main/LICENSE',
       ),
       LinkChip(
         leading: const Icon(

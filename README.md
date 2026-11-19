@@ -1,21 +1,72 @@
 <div align="center">
 
-<img src="best_gallery_logo.svg" alt='Best gallery logo' width="200" />
+<img src="assets/best_gallery_icon.png" alt='Best gallery logo' width="200" />
 
 ## Best gallery
 
+[![Latest release](https://img.shields.io/github/v/release/titipongbest/Best-gallery?sort=semver)](https://github.com/titipongbest/Best-gallery/releases/latest)
+
 Best gallery is a fork of [Aves](https://github.com/deckerst/aves), the gallery and metadata explorer app for Android built with Flutter.
-It keeps the original file dates when moving or copying media, so that items stay sorted as before.
 
 Refine by NorthXbar
 
+[<img src="https://raw.githubusercontent.com/deckerst/common/main/assets/get-it-on-github.png"
+      alt='Get it on GitHub'
+      height="70">](https://github.com/titipongbest/Best-gallery/releases/latest)
+
 </div>
+
+### Best gallery highlights
+
+- **Date preservation**: keeps original file modified dates when moving, copying, renaming, exporting, rotating, editing metadata, or capturing video frames.
+- **Privacy & security**: app lock with custom keypad PIN and fingerprint ("Secure by NorthX"), separate MEGA PIN lock, and secure overwrite wipe when deleting files.
+- **MEGA cloud drive**: browse, rename, stream/download with progress, search across the entire drive, and manage private on-device cache.
+- **Faster browsing**: "On this day" memories carousel, quick filter pills (`All`, `Favorites`, `Videos`, `Recently added`), album quick-access tiles, and an eye button in filtered photo viewers to jump directly to that photo's date position in All collection.
+- **Diagnostics & tools**: built-in crash & ANR log viewer in About, plus an IG ID Renamer shortcut in the navigation drawer.
 
 ### Best gallery versions
 
 The version shown in the app (About page and navigation drawer) comes from `version` in `pubspec.yaml`,
 which must be kept in sync with `flavors/pubspec_*.yaml`. Bump it with each update.
 
+- **2.3.6**
+  - eye button in filtered photo viewer (including "On this day") to jump directly to and highlight that photo's date position in All collection
+- **2.3.5**
+  - updated 3D gold "B GALLERY" app icon, adaptive icons, and banner
+  - fixed portrait-to-landscape aspect ratio distortion after rotation across viewer, thumbnails, and decoders
+- **2.3.4**
+  - captured video frames inherit date from source video date plus frame position
+- **2.3.3**
+  - fixed long-press selection missing the photo when the "On this day" header is shown
+- **2.3.2**
+  - kept "On this day" and quick filter headers scrolled away when long-pressing to select
+- **2.3.1**
+  - fixed black screen when closing the MEGA lock page after a back press
+- **2.3.0**
+  - search files and folders by name across the entire MEGA cloud drive
+- **2.2.9**
+  - show MEGA cache size with a button to clear it
+- **2.2.8**
+  - cache MEGA folder tree on device without re-probing files
+  - swapped Albums and Favorites in the bottom navigation bar
+- **2.2.7**
+  - added IG ID Renamer shortcut below MEGA in the navigation drawer; removed Quick Settings tile
+- **2.2.6**
+  - added Quick Settings tile to open the app
+- **2.2.5**
+  - keep downloaded MEGA files in app-private storage until logout and exclude them from backups
+- **2.2.4**
+  - show MEGA video download progress; removed MEGA tile from the albums page
+- **2.2.3**
+  - download MEGA videos in the background before playback
+- **2.2.2**
+  - 3D gold logo for the app icon, in-app logo, and lock page
+- **2.2.1**
+  - show main thread stack of ANRs in the crash log; handle explorer listing errors
+- **2.2.0**
+  - new app icon, pinned memories and album quick-access tiles at the top, MEGA PIN lock, in-app crash log
+- **2.1.0**
+  - browse and rename MEGA cloud drive photos
 - **2.0.2**
   - photo grid back to square tiles with the original tight spacing
 - **2.0.1**

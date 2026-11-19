@@ -644,6 +644,8 @@
   "aboutDataUsageClearCache": "Clear Cache",
 
   "aboutCreditsSectionTitle": "Credits",
+  "aboutCreditsAves1": "Best gallery is forked from",
+  "aboutCreditsAves2": "by Thibault Deckers.",
   "aboutCreditsWorldAtlas1": "This app uses a TopoJSON file from",
   "aboutCreditsWorldAtlas2": "under ISC License.",
   "aboutTranslatorsSectionTitle": "Translators",
