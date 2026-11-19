@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:aves/app_mode.dart';
 import 'package:aves/model/entry/entry.dart';
 import 'package:aves/model/entry/extensions/multipage.dart';
+import 'package:aves/model/entry/extensions/props.dart';
+import 'package:aves/model/filters/trash.dart';
 import 'package:aves/model/settings/enums/accessibility_animations.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/model/source/collection_lens.dart';
@@ -51,9 +53,20 @@ class const ViewerButtons({
 
   static double _buttonSize(BuildContext context) => OverlayButton.getSize(context);
 
+  bool _canShowInAllCollection(AppMode appMode) {
+    if (appMode != .main) return false;
+    final _collection = collection;
+    if (_collection == null || _collection.filters.isEmpty) return false;
+    if (mainEntry.trashed || mainEntry.isMegaContent || _collection.filters.contains(TrashFilter.instance)) return false;
+    final targetEntry = mainEntry.isStack ? mainEntry.stackedEntries?.firstOrNull : mainEntry;
+    return targetEntry != null && _collection.source.visibleEntries.contains(targetEntry);
+  }
+
   @override
   Widget build(BuildContext context) {
     final actionDelegate = EntryActionDelegate(mainEntry, pageEntry, collection);
+    final appMode = context.watch<ValueNotifier<AppMode>>().value;
+    final showInAllCollection = _canShowInAllCollection(appMode);
 
     if (settings.useTvLayout) {
       return _TvButtonRowContent(
@@ -61,16 +74,17 @@ class const ViewerButtons({
         scale: scale,
         mainEntry: mainEntry,
         pageEntry: pageEntry,
+        showInAllCollection: showInAllCollection,
       );
     }
 
-    final appMode = context.watch<ValueNotifier<AppMode>>().value;
     bool isVisible(EntryAction action) => actionDelegate.isVisible(
       appMode: appMode,
       action: action,
     );
 
     final trashed = mainEntry.trashed;
+    final reservedCount = 1 + (showInAllCollection ? 1 : 0);
     return SafeArea(
       top: false,
       bottom: false,
@@ -81,7 +95,7 @@ class const ViewerButtons({
           return Selector<Settings, bool>(
             selector: (context, s) => s.isRotationLocked,
             builder: (context, _, child) {
-              final quickActions = (trashed ? EntryActions.trashed : settings.viewerQuickActions).where(isVisible).where(actionDelegate.canApply).take(max(0, availableCount - 1)).toList();
+              final quickActions = (trashed ? EntryActions.trashed : settings.viewerQuickActions).where(isVisible).where(actionDelegate.canApply).take(max(0, availableCount - reservedCount)).toList();
               List<EntryAction> getMenuActions(List<EntryAction> categoryActions) {
                 return categoryActions.where((action) => !quickActions.contains(action)).where(isVisible).toList();
               }
@@ -95,6 +109,7 @@ class const ViewerButtons({
                 scale: scale,
                 mainEntry: mainEntry,
                 pageEntry: pageEntry,
+                showInAllCollection: showInAllCollection,
               );
             },
           );
@@ -109,6 +124,7 @@ class const _TvButtonRowContent({
   required final Animation<double> scale,
   required final AvesEntry mainEntry,
   required final AvesEntry pageEntry,
+  final bool showInAllCollection = false,
 }) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -120,44 +136,59 @@ class const _TvButtonRowContent({
           mainAxisAlignment: .center,
           crossAxisAlignment: .start,
           textDirection: ViewerBottomOverlay.actionsDirection,
-          children:
-              [
-                    ...EntryActions.topLevel,
-                    ...EntryActions.export,
-                    ...EntryActions.videoPlayback,
-                    ...EntryActions.video,
-                  ]
-                  .where(
-                    (action) => actionDelegate.isVisible(
-                      appMode: appMode,
+          children: [
+            if (showInAllCollection)
+              CaptionedButton(
+                scale: scale,
+                iconButtonBuilder: (context, focusNode) => IconButton(
+                  icon: const Icon(AIcons.show),
+                  onPressed: () => ShowInAllCollectionNotification().dispatch(context),
+                  focusNode: focusNode,
+                  tooltip: context.l10n.slideshowActionShowInCollection,
+                ),
+                captionText: CaptionedButtonText(
+                  text: context.l10n.slideshowActionShowInCollection,
+                  enabled: true,
+                ),
+                onPressed: () => ShowInAllCollectionNotification().dispatch(context),
+              ),
+            ...[
+                  ...EntryActions.topLevel,
+                  ...EntryActions.export,
+                  ...EntryActions.videoPlayback,
+                  ...EntryActions.video,
+                ]
+                .where(
+                  (action) => actionDelegate.isVisible(
+                    appMode: appMode,
+                    action: action,
+                  ),
+                )
+                .map((action) {
+                  final enabled = actionDelegate.canApply(action);
+                  return CaptionedButton(
+                    scale: scale,
+                    iconButtonBuilder: (context, focusNode) => _ViewerButtonRowContentState._buildButtonIcon(
+                      context: context,
                       action: action,
+                      mainEntry: mainEntry,
+                      pageEntry: pageEntry,
+                      videoController: videoController,
+                      actionDelegate: actionDelegate,
+                      focusNode: focusNode,
                     ),
-                  )
-                  .map((action) {
-                    final enabled = actionDelegate.canApply(action);
-                    return CaptionedButton(
-                      scale: scale,
-                      iconButtonBuilder: (context, focusNode) => _ViewerButtonRowContentState._buildButtonIcon(
-                        context: context,
-                        action: action,
-                        mainEntry: mainEntry,
-                        pageEntry: pageEntry,
-                        videoController: videoController,
-                        actionDelegate: actionDelegate,
-                        focusNode: focusNode,
-                      ),
-                      captionText: _buildButtonCaption(
-                        context: context,
-                        action: action,
-                        mainEntry: mainEntry,
-                        pageEntry: pageEntry,
-                        videoController: videoController,
-                        enabled: enabled,
-                      ),
-                      onPressed: enabled ? () => actionDelegate.onActionSelected(context, action) : null,
-                    );
-                  })
-                  .toList(),
+                    captionText: _buildButtonCaption(
+                      context: context,
+                      action: action,
+                      mainEntry: mainEntry,
+                      pageEntry: pageEntry,
+                      videoController: videoController,
+                      enabled: enabled,
+                    ),
+                    onPressed: enabled ? () => actionDelegate.onActionSelected(context, action) : null,
+                  );
+                }),
+          ],
         );
       },
     );
@@ -207,6 +238,7 @@ class const ViewerButtonRowContent({
   required final Animation<double> scale,
   required final AvesEntry mainEntry,
   required final AvesEntry pageEntry,
+  final bool showInAllCollection = false,
 }) extends StatefulWidget {
   static const double padding = 8;
 
@@ -255,6 +287,18 @@ class _ViewerButtonRowContentState extends State<ViewerButtonRowContent> {
           child: Row(
             textDirection: ViewerBottomOverlay.actionsDirection,
             children: [
+              if (widget.showInAllCollection)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: padding / 2),
+                  child: OverlayButton(
+                    scale: widget.scale,
+                    child: IconButton(
+                      icon: const Icon(AIcons.show),
+                      onPressed: () => ShowInAllCollectionNotification().dispatch(context),
+                      tooltip: context.l10n.slideshowActionShowInCollection,
+                    ),
+                  ),
+                ),
               const Spacer(),
               ...widget.quickActions.map((action) => _buildOverlayButton(context, action, videoController)),
               if (hasOverflowMenu)
