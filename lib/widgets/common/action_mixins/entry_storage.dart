@@ -32,6 +32,7 @@ import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/dialogs/aves_confirmation_dialog.dart';
 import 'package:aves/widgets/dialogs/aves_dialog.dart';
 import 'package:aves/widgets/dialogs/pick_dialogs/album_pick_page.dart';
+import 'package:aves/widgets/dialogs/pick_dialogs/folder_pick_page.dart';
 import 'package:aves/widgets/dialogs/selection_dialogs/single_selection.dart';
 import 'package:aves/widgets/filter_grids/common/enums.dart';
 import 'package:aves/widgets/viewer/controls/notifications.dart';
@@ -430,6 +431,31 @@ mixin EntryStorageMixin on FeedbackMixin, PermissionAwareMixin, SizeAwareMixin, 
       context,
       moveType: moveType,
       entriesByDestination: entriesByDestination,
+      onSuccess: onSuccess,
+    );
+  }
+
+  // returns whether it completed the action (with or without failures)
+  Future<bool> doMoveToFolder(
+    BuildContext context, {
+    required Set<AvesEntry> entries,
+    bool hideShowAction = false,
+    VoidCallback? onSuccess,
+  }) async {
+    final destinationFolder = await pickFolder(context: context);
+    if (destinationFolder == null) return false;
+
+    settings.recentDestinationAlbums = settings.recentDestinationAlbums
+      ..remove(destinationFolder)
+      ..insert(0, destinationFolder);
+
+    return await doQuickMove(
+      context,
+      moveType: MoveType.move,
+      entriesByDestination: {
+        destinationFolder: entries,
+      },
+      hideShowAction: hideShowAction,
       onSuccess: onSuccess,
     );
   }
