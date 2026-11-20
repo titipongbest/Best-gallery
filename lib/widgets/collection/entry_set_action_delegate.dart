@@ -135,6 +135,7 @@ class EntrySetActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAware
         return isMain && isSelecting && canWrite;
       case .copy:
       case .move:
+      case .moveToFolder:
       case .rename:
       case .convert:
       case .exportGpx:
@@ -200,6 +201,7 @@ class EntrySetActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAware
       case .restore:
       case .copy:
       case .move:
+      case .moveToFolder:
       case .rename:
       case .convert:
       case .copyToClipboard:
@@ -268,6 +270,8 @@ class EntrySetActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAware
         _move(context, moveType: MoveType.copy);
       case .move:
         _move(context, moveType: MoveType.move);
+      case .moveToFolder:
+        _moveToFolder(context);
       case .rename:
         _rename(context);
       case .convert:
@@ -423,6 +427,11 @@ class EntrySetActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAware
   Future<void> _move(BuildContext context, {required MoveType moveType}) async {
     final entries = _getTargetItems(context);
     await doMove(context, moveType: moveType, entries: entries);
+  }
+
+  Future<void> _moveToFolder(BuildContext context) async {
+    final entries = _getTargetItems(context);
+    await doMoveToFolder(context, entries: entries);
   }
 
   Future<void> _rename(BuildContext context) async {
