@@ -29,6 +29,9 @@ Refine by NorthXbar
 The version shown in the app (About page and navigation drawer) comes from `version` in `pubspec.yaml`,
 which must be kept in sync with `flavors/pubspec_*.yaml`. Bump it with each update.
 
+- **2.3.7**
+  - added "Move to folder" option below "Move to album" in the selection 3-dot menu with a device folder browser/picker
+  - updated README and in-app About page (links, credits, bug report, and privacy policy)
 - **2.3.6**
   - eye button in filtered photo viewer (including "On this day") to jump directly to and highlight that photo's date position in All collection
 - **2.3.5**
