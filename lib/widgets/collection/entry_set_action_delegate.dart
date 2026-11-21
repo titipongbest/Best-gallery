@@ -403,9 +403,6 @@ class EntrySetActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAware
             showFeedback(context, FeedbackType.info, context.l10n.wipeSuccessFeedback(wipedCount));
           }
         }
-
-        // cleanup
-        await storageService.deleteEmptyRegularDirectories(storageDirs);
       },
     );
     return true;
