@@ -319,7 +319,7 @@ mixin EntryStorageMixin on FeedbackMixin, PermissionAwareMixin, SizeAwareMixin, 
         source.resumeMonitoring();
 
         // cleanup
-        if ({MoveType.move, MoveType.toBin}.contains(moveType)) {
+        if (moveType == MoveType.move) {
           await storageService.deleteEmptyRegularDirectories(originAlbums);
         }
 
