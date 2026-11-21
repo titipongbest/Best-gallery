@@ -29,6 +29,8 @@ Refine by NorthXbar
 The version shown in the app (About page and navigation drawer) comes from `version` in `pubspec.yaml`,
 which must be kept in sync with `flavors/pubspec_*.yaml`. Bump it with each update.
 
+- **2.3.8**
+  - keep empty folders intact after deleting all photos (both permanently and to recycle bin)
 - **2.3.7**
   - added "Move to folder" option below "Move to album" in the selection 3-dot menu with a device folder browser/picker
   - updated README and in-app About page (links, credits, bug report, and privacy policy)
